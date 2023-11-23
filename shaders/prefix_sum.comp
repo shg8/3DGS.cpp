@@ -1,0 +1,58 @@
+#version 450
+#include "./common.glsl"
+
+#ifdef DEBUG
+#extension GL_EXT_debug_printf : enable
+#endif
+
+layout (std430, set = 0, binding = 0) buffer In {
+    uint src[];
+};
+
+layout (std430, set = 0, binding = 1) buffer Out {
+    uint dst[];
+};
+
+layout( push_constant ) uniform Constants
+{
+    uint timestep;
+};
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+uint power(uint base, uint exponent) {
+    uint result = 1;
+    for (uint i = 0; i < exponent; i++) {
+        result *= base;
+    }
+    return result;
+}
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= src.length()) {
+        return;
+    }
+
+    if (timestep % 2 == 0) {
+        if (index < pow(2, timestep)) {
+            dst[index] = src[index];
+        } else {
+            uint index2 = index - power(2, timestep);
+            dst[index] = src[index] + src[index2];
+        }
+    } else {
+        if (index < pow(2, timestep)) {
+            src[index] = dst[index];
+        } else {
+            uint index2 = index - power(2, timestep);
+            src[index] = dst[index] + dst[index2];
+        }
+    }
+
+    #ifdef DEBUG
+    if (index == 0) {
+//        debugPrintfEXT("timestep: %d\n", timestep);
+    }
+    #endif
+}

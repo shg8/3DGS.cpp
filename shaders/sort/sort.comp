@@ -1,0 +1,183 @@
+/**
+* VkRadixSort written by Mirco Werner: https://github.com/MircoWerner/VkRadixSort
+* Based on implementation of Intel's Embree: https://github.com/embree/embree/blob/v4.0.0-ploc/kernels/rthwif/builder/gpu/sort.h
+*/
+
+/**
+* This shader is modified from the original to support 64-bit k-v pairs.
+* The license of the original code is as follows:
+
+    MIT License
+
+    Copyright (c) 2023 Mirco Werner
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+*/
+
+#version 460
+#extension GL_GOOGLE_include_directive: enable
+#extension GL_KHR_shader_subgroup_basic: enable
+#extension GL_KHR_shader_subgroup_arithmetic: enable
+#extension GL_KHR_shader_subgroup_ballot: enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#extension GL_EXT_shader_atomic_int64 : enable
+
+#define WORKGROUP_SIZE 256// assert WORKGROUP_SIZE >= RADIX_SORT_BINS
+#define RADIX_SORT_BINS 256U
+#define SUBGROUP_SIZE 32// 32 NVIDIA; 64 AMD
+
+#define BITS 64// sorting uint32_t
+
+#if BITS == 64
+    #define key_t uint64_t
+#else
+    #define key_t uint
+#endif
+
+layout (local_size_x = WORKGROUP_SIZE) in;
+
+layout (push_constant, std430) uniform PushConstants {
+    uint g_num_elements;
+    uint g_shift;
+    uint g_num_workgroups;
+    uint g_num_blocks_per_workgroup;
+};
+
+layout (std430, set = 0, binding = 0) buffer elements_in {
+    key_t g_elements_in[];
+};
+
+layout (std430, set = 0, binding = 1) buffer elements_out {
+    key_t g_elements_out[];
+};
+
+layout (std430, set = 0, binding = 2) buffer payload_in {
+    uint g_payload_in[];
+};
+
+layout (std430, set = 0, binding = 3) buffer payload_out {
+    uint g_payload_out[];
+};
+
+layout (std430, set = 0, binding = 4) buffer histograms {
+// [histogram_of_workgroup_0 | histogram_of_workgroup_1 | ... ]
+    uint g_histograms[];// |g_histograms| = RADIX_SORT_BINS * #WORKGROUPS = RADIX_SORT_BINS * g_num_workgroups
+};
+
+shared uint[RADIX_SORT_BINS / SUBGROUP_SIZE] sums;// subgroup reductions
+shared uint[RADIX_SORT_BINS] global_offsets;// global exclusive scan (prefix sum)
+
+struct BinFlags {
+    key_t flags[WORKGROUP_SIZE / BITS];
+};
+shared BinFlags[RADIX_SORT_BINS] bin_flags;
+
+void main() {
+    uint gID = gl_GlobalInvocationID.x;
+    uint lID = gl_LocalInvocationID.x;
+    uint wID = gl_WorkGroupID.x;
+    uint sID = gl_SubgroupID;
+    uint lsID = gl_SubgroupInvocationID;
+
+    uint local_histogram = 0;
+    uint prefix_sum = 0;
+    uint histogram_count = 0;
+
+    if (lID < RADIX_SORT_BINS) {
+        uint count = 0;
+        for (uint j = 0; j < g_num_workgroups; j++) {
+            const uint t = g_histograms[RADIX_SORT_BINS * j + lID];
+            local_histogram = (j == wID) ? count : local_histogram;
+            count += t;
+        }
+        histogram_count = count;
+        const uint sum = subgroupAdd(histogram_count);
+        prefix_sum = subgroupExclusiveAdd(histogram_count);
+        if (subgroupElect()) {
+            // one thread inside the warp/subgroup enters this section
+            sums[sID] = sum;
+        }
+    }
+    barrier();
+
+    if (lID < RADIX_SORT_BINS) {
+        const uint sums_prefix_sum = subgroupBroadcast(subgroupExclusiveAdd(sums[lsID]), sID);
+        const uint global_histogram = sums_prefix_sum + prefix_sum;
+        global_offsets[lID] = global_histogram + local_histogram;
+    }
+
+    //     ==== scatter keys according to global offsets =====
+    const uint flags_bin = lID / BITS;
+    const uint64_t flags_bit = 1UL << (lID % BITS);
+
+    for (uint index = 0; index < g_num_blocks_per_workgroup; index++) {
+        uint elementId = wID * g_num_blocks_per_workgroup * WORKGROUP_SIZE + index * WORKGROUP_SIZE + lID;
+
+        // initialize bin flags
+        if (lID < RADIX_SORT_BINS) {
+            for (int i = 0; i < WORKGROUP_SIZE / BITS; i++) {
+                bin_flags[lID].flags[i] = 0U;// init all bin flags to 0
+            }
+        }
+        barrier();
+
+        key_t element_in = 0;
+        uint payload_in = 0;
+        uint binID = 0;
+        uint binOffset = 0;
+        if (elementId < g_num_elements) {
+            element_in = g_elements_in[elementId];
+            payload_in = g_payload_in[elementId];
+            binID = uint(element_in >> g_shift) & uint(RADIX_SORT_BINS - 1);
+            // offset for group
+            binOffset = global_offsets[binID];
+            // add bit to flag
+            atomicAdd(bin_flags[binID].flags[flags_bin], flags_bit);
+        }
+        barrier();
+
+        if (elementId < g_num_elements) {
+            // calculate output index of element
+            uint prefix = 0;
+            uint count = 0;
+            for (uint i = 0; i < WORKGROUP_SIZE / BITS; i++) {
+                const key_t bits = bin_flags[binID].flags[i];
+                #if BITS == 64
+                const uint full_count = bitCount(uint(bits)) + bitCount(uint(bits >> 32));
+                const key_t partial_bits = bits & (flags_bit - 1);
+                const uint partial_count = bitCount(uint(partial_bits)) + bitCount(uint(partial_bits >> 32));
+                #else
+                const uint full_count = bitCount(bits);
+                const uint partial_count = bitCount(bits & (flags_bit - 1));
+                #endif
+                prefix += (i < flags_bin) ? full_count : 0U;
+                prefix += (i == flags_bin) ? partial_count : 0U;
+                count += full_count;
+            }
+            g_elements_out[binOffset + prefix] = element_in;
+            g_payload_out[binOffset + prefix] = payload_in;
+            if (prefix == count - 1) {
+                atomicAdd(global_offsets[binID], count);
+            }
+        }
+
+        barrier();
+    }
+}

@@ -1,0 +1,98 @@
+#version 450
+#include "./common.glsl"
+
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
+
+layout (std430, set = 0, binding = 0) readonly buffer Vertices {
+    VertexAttribute attr[];
+};
+
+layout (std430, set = 0, binding = 1) readonly buffer Boundaries {
+    uint boundaries[];
+};
+
+layout (std430, set = 0, binding = 2) readonly buffer SortedVertices {
+    uint sorted_vertices[];
+};
+
+layout (set = 1, binding = 0) uniform writeonly image2D output_image;
+
+layout( push_constant ) uniform Constants
+{
+    uint width;
+    uint height;
+};
+
+layout (local_size_x = TILE_WIDTH, local_size_y = TILE_HEIGHT, local_size_z = 1) in;
+
+void main() {
+    uint tileX = gl_WorkGroupID.x;
+    uint tileY = gl_WorkGroupID.y;
+    uint localX = gl_LocalInvocationID.x;
+    uint localY = gl_LocalInvocationID.y;
+
+    uvec2 curr_uv = uvec2(tileX * TILE_WIDTH + localX, tileY * TILE_HEIGHT + localY);
+    if (curr_uv.x >= width || curr_uv.y >= height) {
+        return;
+    }
+
+    uint tiles_width = ((width + TILE_WIDTH - 1) / TILE_WIDTH);
+
+    uint start = boundaries[(tileX + tileY * tiles_width) * 2];
+    uint end = boundaries[(tileX + tileY * tiles_width) * 2 + 1];
+
+    float T = 1.0f;
+    vec3 c = vec3(0.0f);
+
+    if (gl_GlobalInvocationID.x == 10000) {
+//        debugPrintfEXT("c %f %f %f\n", attr[vertex_key].color_radii.x, attr[vertex_key].color_radii.y, attr[vertex_key].color_radii.z);
+//        debugPrintfEXT("uv %d %d\n", attr[vertex_key].uv.x, attr[vertex_key].uv.y);
+//        debugPrintfEXT("curr_uv %d %d\n", curr_uv.x, curr_uv.y);
+//        debugPrintfEXT("co %f %f %f %f\n", attr[vertex_key].conic_opacity.x, attr[vertex_key].conic_opacity.y, attr[vertex_key].conic_opacity.z, attr[vertex_key].conic_opacity.w);
+    }
+
+    if (start > end && gl_LocalInvocationIndex == 0) {
+//        debugPrintfEXT("ERROR ----- start %d end %d at %d (TX %d TY %d wid %d)\n", start, end, tileX + tileY * tiles_width, tileX, tileY, tiles_width);
+//        debugPrintfEXT("      ----- %d %d %d %d\n", boundaries[tileX + tileY * tiles_width - 2], boundaries[tileX + tileY * tiles_width - 1], boundaries[tileX + tileY * tiles_width + 2], boundaries[tileX + tileY * tiles_width + 3]);
+    }
+
+    for (uint i = start; i < end; i++) {
+        uint vertex_key = sorted_vertices[i];
+        vec2 uv = attr[vertex_key].uv;
+        vec2 distance = uv - vec2(curr_uv);
+        vec4 co = attr[vertex_key].conic_opacity;
+        float power = -0.5f * (co.x * distance.x * distance.x + co.z * distance.y * distance.y) - co.y * distance.x * distance.y;
+
+        if (power > 0.0f) {
+            continue;
+        }
+
+        if (gl_GlobalInvocationID.x == 100) {
+//            debugPrintfEXT("radius %f\n", attr[vertex_key].color_radii.w);
+        }
+
+
+        float alpha = min(0.99f, co.w * exp(power));
+        if (alpha < 1.0f / 255.0f) {
+            continue;
+        }
+
+        float test_T = T * (1 - alpha);
+        if (test_T < 0.0001f) {
+            break;
+        }
+
+        c += attr[vertex_key].color_radii.xyz * alpha * T;
+        T = test_T;
+    }
+
+//    if (index == 10000) {
+//        debugPrintfEXT("c %f %f %f\n", c.x, c.y, c.z);
+//    }
+
+    // set pixel to red
+//    ivec2 pixel_coords = ivec2(curr_uv);
+//    imageStore(output_image, ivec2(curr_uv), vec4(1.0, 0.0, 0.0, 1.0));
+    imageStore(output_image, ivec2(curr_uv), vec4(c, 1.0f));
+}

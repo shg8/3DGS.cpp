@@ -1,0 +1,60 @@
+#version 450
+#include "./common.glsl"
+
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
+
+layout (std430, set = 0, binding = 0) readonly buffer Vertices {
+    VertexAttribute attr[];
+};
+
+layout (std430, set = 0, binding = 1) readonly buffer In {
+    uint prefixSum[];
+};
+
+layout (std430, set = 0, binding = 2) writeonly buffer OutKeys {
+    uint64_t keys[];
+};
+
+layout (std430, set = 0, binding = 3) writeonly buffer OutPayloads {
+    uint payloads[];
+};
+
+layout( push_constant ) uniform Constants
+{
+    uint tileX;
+};
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= prefixSum.length()) {
+        return;
+    }
+
+    if (attr[index].color_radii.w == 0) {
+        return;
+    }
+
+    assert(attr[index].aabb.x < attr[index].aabb.z && attr[index].aabb.y < attr[index].aabb.w, "in!!!valid aabb: %d %d %d %d\n", ivec4(attr[index].aabb));
+
+    uint ind = index == 0 ? 0 : prefixSum[index - 1];
+
+//    assert(attr[index].aabb.x < (800 + TILE_WIDTH - 1) / TILE_WIDTH && attr[index].aabb.y < (600 + TILE_HEIGHT - 1) / TILE_HEIGHT, "invalid aabb: %d %d %d %d\n", ivec4(attr[index].aabb));
+
+    for (uint i = attr[index].aabb.x; i < attr[index].aabb.z; i++) {
+        for (uint j = attr[index].aabb.y; j < attr[index].aabb.w; j++) {
+            uint64_t tileIndex = i + j * tileX;
+//            assert(tileIndex <= 1900, "key <= 1900 %d", tileIndex);
+
+            uint depthBits = floatBitsToUint(float16_t(attr[index].depth));
+            uint64_t k = (tileIndex << 32) | uint64_t(depthBits);
+            keys[ind] = k;
+            payloads[ind] = index;
+            ind++;
+        }
+    }
+
+    assert(ind == prefixSum[index], "ind: %d", ind);
+}

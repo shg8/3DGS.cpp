@@ -1,0 +1,181 @@
+#version 450
+#include "./common.glsl"
+
+
+layout (std430, set = 0, binding = 0) readonly buffer Vertices {
+    Vertex vertices[];
+};
+
+layout (std430, set = 0, binding = 1) readonly buffer Cov3Ds {
+    float cov3ds[];
+};
+
+layout (std140, set = 1, binding = 0) uniform Params {
+    vec4 camera_position;
+    mat4 proj_mat;
+    mat4 view_mat;
+    uint width;
+    uint height;
+    float tan_fovx;
+    float tan_fovy;
+};
+
+layout (std430, set = 1, binding = 1) writeonly buffer VertexAttributes {
+    VertexAttribute attr[];
+};
+
+layout (std430, set = 1, binding = 2) writeonly buffer NumTilesOverlap {
+    uint tiles_overlap[];
+};
+
+layout (local_size_x = TILE_WIDTH * TILE_HEIGHT, local_size_y = 1, local_size_z = 1) in;
+
+mat3 get_projection_jacobian_approx(vec3 t) {
+    float limx = 1.3 * tan_fovx;
+    float limy = 1.3 * tan_fovy;
+    float txtz = t.x / t.z;
+    float tytz = t.y / t.z;
+    t.x = min(limx, max(-limx, txtz)) * t.z;
+    t.y = min(limy, max(-limy, tytz)) * t.z;
+
+    float focal_x = width / (2 * tan_fovx);
+    float focal_y = height / (2 * tan_fovy);
+
+    return mat3(
+        focal_x / t.z, 0, -(focal_x * t.x) / (t.z * t.z),
+        0, focal_y / t.z, -(focal_y * t.y) / (t.z * t.z),
+        0, 0, 0
+    );
+}
+
+mat2 compute_cov2d(vec3 cam) {
+    uint index = gl_GlobalInvocationID.x;
+    mat3 J = get_projection_jacobian_approx(cam);
+    mat3 W = transpose(mat3(view_mat));
+    mat3 Sigma = mat3(
+        cov3ds[index * 6], cov3ds[index * 6 + 1], cov3ds[index * 6 + 2],
+        cov3ds[index * 6 + 1], cov3ds[index * 6 + 3], cov3ds[index * 6 + 4],
+        cov3ds[index * 6 + 2], cov3ds[index * 6 + 4], cov3ds[index * 6 + 5]
+    );
+    mat3 T = W * J;
+    mat3 cov2d = transpose(T) * Sigma * T;
+    cov2d[0][0] += 0.3f;
+    cov2d[1][1] += 0.3f;
+    return mat2(cov2d);
+}
+
+vec3 get_sh_vec3(uint ind) {
+    uint index = gl_GlobalInvocationID.x;
+    return vec3(vertices[index].sh[ind * 3], vertices[index].sh[ind * 3 + 1], vertices[index].sh[ind * 3 + 2]);
+}
+
+vec3 compute_sh() {
+    uint index = gl_GlobalInvocationID.x;
+
+    vec3 ray_direction = vertices[index].position.xyz - camera_position.xyz;
+    ray_direction /= length(ray_direction);
+    float x = ray_direction.x, y = ray_direction.y, z = ray_direction.z;
+
+    vec3 c = SH_C0 * get_sh_vec3(0);
+
+    c -= SH_C1 * get_sh_vec3(1) * y;
+    c += SH_C1 * get_sh_vec3(2) * z;
+    c -= SH_C1 * get_sh_vec3(3) * x;
+
+    c += SH_C2[0] * get_sh_vec3(4) * x * y;
+    c += SH_C2[1] * get_sh_vec3(5) * y * z;
+    c += SH_C2[2] * get_sh_vec3(6) * (2.0 * z * z - x * x - y * y);
+    c += SH_C2[3] * get_sh_vec3(7) * z * x;
+    c += SH_C2[4] * get_sh_vec3(8) * (x * x - y * y);
+
+    c += SH_C3[0] * get_sh_vec3(9) * (3.0 * x * x - y * y) * y;
+    c += SH_C3[1] * get_sh_vec3(10) * x * y * z;
+    c += SH_C3[2] * get_sh_vec3(11) * (4.0 * z * z - x * x - y * y) * y;
+    c += SH_C3[3] * get_sh_vec3(12) * z * (2.0 * z * z - 3.0 * x * x - 3.0 * y * y);
+    c += SH_C3[4] * get_sh_vec3(13) * x * (4.0 * z * z - x * x - y * y);
+    c += SH_C3[5] * get_sh_vec3(14) * (x * x - y * y) * z;
+    c += SH_C3[6] * get_sh_vec3(15) * x * (x * x - 3.0 * y * y);
+
+    c += 0.5;
+
+    if (c.x < 0.0) {
+        c.x = 0.0;
+    }
+
+//    assert(all(lessThanEqual(c, vec3(159.0))), "invalid sh: %f %f %f\n", c);
+    return c;
+}
+
+float ndc2Pix(float v, int S)
+{
+    return ((v + 1.0) * S - 1.0) * 0.5;
+}
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= vertices.length()) {
+        return;
+    }
+    if (index == 0) {
+//        debugPrintfEXT("width: %d, height: %d, tan_fovx: %f, tan_fovy: %f\n", width, height, tan_fovx, tan_fovy);
+    }
+
+    ivec2 tile_shape = ivec2((width + TILE_WIDTH - 1) / TILE_WIDTH, (height + TILE_HEIGHT - 1) / TILE_HEIGHT);
+//    assert(tile_shape.x == 50 && tile_shape.y == 38, "invalid tile shape: %d %d\n", tile_shape);
+
+    attr[index].color_radii.w = 0.0;
+    tiles_overlap[index] = 0;
+
+    vec4 p_hom = proj_mat * vertices[index].position;
+    float p_w = 1.0f / p_hom.w;
+    vec3 ndc = vec3(p_hom.xyz * p_w);
+
+    vec4 p_view = view_mat * vertices[index].position;
+    if (p_view.z <= 0.2f) {
+        return;
+    }
+
+    mat2 cov2d = compute_cov2d(p_view.xyz);
+    float det = determinant(cov2d);
+    if (det <= 0.0) {
+        return;
+    }
+    mat2 conic = inverse(cov2d);
+    attr[index].conic_opacity.xyz = vec3(conic[0][0], conic[0][1], conic[1][1]);
+    attr[index].conic_opacity.w = vertices[index].scale_opacity.w;
+
+    float mid = 0.5 * (cov2d[0][0] + cov2d[1][1]);
+    float lambda1 = mid + sqrt(max(0.1, mid * mid - det));
+    float lambda2 = mid - sqrt(max(0.1, mid * mid - det));
+    float lambda = max(lambda1, lambda2);
+    float radii = ceil(3.0 * sqrt(lambda));
+//    if (radii > 2.0) {
+//        debugPrintfEXT("lambda: %f, radii: %f\n", lambda, radii);
+//    }
+
+//    vec2 uv = vec2((ndc.x + 1.0) * 0.5 * width, (ndc.y + 1.0) * 0.5 * height);
+    vec2 uv = vec2(ndc2Pix(ndc.x, int(width)), ndc2Pix(ndc.y, int(height)));
+
+    uvec4 bounding_box = uvec4(
+            uint(clamp(int((uv.x - radii) / TILE_WIDTH), 0, tile_shape.x)),
+            uint(clamp(int((uv.y - radii) / TILE_HEIGHT), 0, tile_shape.y)),
+            uint(clamp(int((uv.x + radii + TILE_WIDTH - 1) / TILE_WIDTH), 0, tile_shape.x)),
+            uint(clamp(int((uv.y + radii + TILE_HEIGHT - 1) / TILE_HEIGHT), 0, tile_shape.y))
+    );
+
+//    debugPrintfEXT("radii: %f, uv: %f %f, aabb: %d %d %d %d\n", radii, uv.x, uv.y, ivec4(bounding_box));
+
+    uint num_tiles_overlap = (bounding_box.z - bounding_box.x) * (bounding_box.w - bounding_box.y);
+    if (num_tiles_overlap == 0) {
+        return;
+    }
+    assert(num_tiles_overlap <= width * height, "too many tiles overlap: %d\n", num_tiles_overlap);
+    attr[index].aabb = bounding_box;
+//    assert(bounding_box.x < bounding_box.z && bounding_box.y < bounding_box.w, "invalid aabb: %d %d %d %d\n", ivec4(bounding_box));
+    tiles_overlap[index] = num_tiles_overlap;
+    attr[index].depth = p_view.z;
+    attr[index].color_radii.w = radii;
+    attr[index].color_radii.xyz = compute_sh();
+    attr[index].uv = uv;
+    attr[index].magic = MAGIC;
+}
