@@ -106,7 +106,7 @@ add_executable(vulkan_splatting main.cpp
 
 add_dependencies(vulkan_splatting Shaders)
 
-target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
+target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${glm_SOURCE_DIR})
 
 target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)
