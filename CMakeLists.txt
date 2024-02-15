@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan COMPONENTS glslangValidator)
 
-if (WIN32)
+if (WIN32 OR APPLE)
     FetchContent_Declare(
             glfw
             GIT_REPOSITORY https://github.com/glfw/glfw
