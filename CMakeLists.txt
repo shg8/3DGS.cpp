@@ -59,12 +59,15 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
 )
 
 if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT APPLE)
-    set(GLSLC_DEFINE "-DDEBUG")
+    list(APPEND GLSLC_DEFINE "-DDEBUG")
 else ()
-    set(GLSLC_DEFINE "-DNDEBUG")
+    list(APPEND GLSLC_DEFINE "-DNDEBUG")
 endif ()
 
-set(GLSLC_DEFINE "${GLSLC_DEFINE}")
+if (APPLE)
+    # append -DAPPLE to GLSLC_DEFINE
+    list(APPEND GLSLC_DEFINE "-DAPPLE")
+endif ()
 
 foreach (GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME)

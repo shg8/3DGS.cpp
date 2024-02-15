@@ -13,7 +13,7 @@
 
 #include "../vulkan/Utils.h"
 
-#define SORT_ALLOCATE_MULTIPLIER 100
+#define SORT_ALLOCATE_MULTIPLIER 5
 
 void Renderer::initialize() {
     initializeVulkan();
@@ -72,10 +72,11 @@ void Renderer::initializeVulkan() {
     vk::PhysicalDeviceFeatures pdf{};
     vk::PhysicalDeviceVulkan11Features pdf11{};
     vk::PhysicalDeviceVulkan12Features pdf12{};
+    pdf.shaderStorageImageWriteWithoutFormat = true;
     pdf.shaderInt64 = true;
     pdf12.shaderFloat16 = true;
-    pdf12.shaderBufferInt64Atomics = true;
-    pdf12.shaderSharedInt64Atomics = true;
+    // pdf12.shaderBufferInt64Atomics = true;
+    // pdf12.shaderSharedInt64Atomics = true;
 
     context->createLogicalDevice(pdf, pdf11, pdf12);
     context->createDescriptorPool(1);
@@ -97,7 +98,8 @@ void Renderer::initializeVulkan() {
 void Renderer::loadSceneToGPU() {
     scene = std::make_shared<GSScene>(configuration.scene);
     scene->load(context);
-    // scene->loadTestScene(context);
+    // reset descriptor pool
+    context->device->resetDescriptorPool(context->descriptorPool.get());
 }
 
 void Renderer::createPreprocessPipeline() {
