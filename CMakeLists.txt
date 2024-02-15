@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan COMPONENTS glslc)
 
-if (MSVC)
+if (WIN32)
     FetchContent_Declare(
             glfw
             GIT_REPOSITORY https://github.com/glfw/glfw
@@ -26,14 +26,16 @@ if (MSVC)
         add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
     endif()
 
-    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup")
-
     FetchContent_Declare(
             glm
             GIT_REPOSITORY https://github.com/g-truc/glm
             GIT_TAG 1.0.0
     )
     FetchContent_MakeAvailable(glm)
+
+    if (MSVC)
+        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup")
+    endif ()
 else ()
     find_package(glfw3 3.3 REQUIRED)
     find_package(glm REQUIRED)
