@@ -110,6 +110,9 @@ target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_
 
 target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)
+if (UNIX)
+    target_link_libraries(vulkan_splatting PUBLIC ${CMAKE_DL_LIBS})
+endif ()
 
 add_custom_command(TARGET vulkan_splatting POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:vulkan_splatting>/shaders/"
