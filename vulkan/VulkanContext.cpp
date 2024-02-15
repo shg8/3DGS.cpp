@@ -44,6 +44,9 @@ VulkanContext::VulkanContext(const std::vector<std::string> &instance_extensions
     deviceExtensions.push_back("VK_KHR_portability_subset");
     deviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 #endif
+    if (validation_layers_enabled) {
+        instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
     auto getInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>(
             "vkGetInstanceProcAddr");
     VULKAN_HPP_DEFAULT_DISPATCHER.init(getInstanceProcAddr);

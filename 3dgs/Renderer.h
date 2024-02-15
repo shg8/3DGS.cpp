@@ -10,7 +10,6 @@
 #include "../vulkan/pipelines/ComputePipeline.h"
 #include "../vulkan/Swapchain.h"
 #include <glm/gtc/quaternion.hpp>
-#include <radix_sort/platforms/vk/radix_sort_vk.h>
 
 struct RendererConfiguration {
     bool enableVulkanValidationLayers = false;
@@ -116,10 +115,6 @@ private:
 
     vk::UniqueCommandBuffer preprocessCommandBuffer;
     vk::UniqueCommandBuffer renderCommandBuffer;
-
-    const radix_sort_vk_target_t* radixSortTarget;
-    radix_sort_vk_t* radixSortPipeline;
-    radix_sort_vk_memory_requirements_t radixSortRequirements = {};
 
     uint32_t currentImageIndex;
 
