@@ -48,7 +48,7 @@ void main() {
             uint64_t tileIndex = i + j * tileX;
 //            assert(tileIndex <= 1900, "key <= 1900 %d", tileIndex);
 
-            uint depthBits = floatBitsToUint(float16_t(attr[index].depth));
+            uint depthBits = floatBitsToUint(attr[index].depth);
             uint64_t k = (tileIndex << 32) | uint64_t(depthBits);
             keys[ind] = k;
             payloads[ind] = index;

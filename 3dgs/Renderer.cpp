@@ -13,7 +13,7 @@
 
 #include "../vulkan/Utils.h"
 
-#define SORT_ALLOCATE_MULTIPLIER 1000
+#define SORT_ALLOCATE_MULTIPLIER 100
 
 void Renderer::initialize() {
     initializeVulkan();
