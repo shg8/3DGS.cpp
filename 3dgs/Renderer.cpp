@@ -66,7 +66,7 @@ void Renderer::initializeVulkan() {
                                               configuration.enableVulkanValidationLayers);
 
     context->createInstance();
-    auto surface = vk::SurfaceKHR{window->createSurface(context)};
+    auto surface = static_cast<vk::SurfaceKHR>(window->createSurface(context));
     context->selectPhysicalDevice(configuration.physicalDeviceId, surface);
 
     vk::PhysicalDeviceFeatures pdf{};

@@ -5,7 +5,7 @@
 #include "Utils.h"
 
 Buffer::Buffer(const std::shared_ptr<VulkanContext>& _context, uint32_t size, vk::BufferUsageFlags usage,
-               VmaMemoryUsage vmaUsage, VmaAllocationCreateFlags flags, bool shared, VkDeviceSize alignment)
+               VmaMemoryUsage vmaUsage, VmaAllocationCreateFlags flags, bool shared, vk::DeviceSize alignment)
         : context(_context),
           size(size),
           usage(usage),
@@ -23,7 +23,7 @@ Buffer::Buffer(const std::shared_ptr<VulkanContext>& _context, uint32_t size, vk
         bufferInfo.setQueueFamilyIndexCount(2).setPQueueFamilyIndices(queueFamilyIndices);
     }
 
-    VkBufferCreateInfo vkBufferInfo = bufferInfo;
+    auto vkBufferInfo = static_cast<VkBufferCreateInfo>(bufferInfo);
 
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = vmaUsage;
@@ -40,7 +40,7 @@ Buffer::Buffer(const std::shared_ptr<VulkanContext>& _context, uint32_t size, vk
     if (res != VK_SUCCESS) {
         throw std::runtime_error("Failed to create buffer");
     }
-    buffer = vkBuffer;
+    buffer = static_cast<vk::Buffer>(vkBuffer);
 }
 
 Buffer Buffer::createStagingBuffer(uint32_t size) {
@@ -119,7 +119,7 @@ std::shared_ptr<Buffer> Buffer::staging(std::shared_ptr<VulkanContext> context, 
                                     false);
 }
 
-std::shared_ptr<Buffer> Buffer::storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing, VkDeviceSize alignment) {
+std::shared_ptr<Buffer> Buffer::storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing, vk::DeviceSize alignment) {
     return std::make_shared<Buffer>(context, size, vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc,
                                               VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
                                               concurrentSharing, alignment);
