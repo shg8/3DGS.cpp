@@ -5,7 +5,7 @@ include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(Vulkan COMPONENTS glslc)
+find_package(Vulkan COMPONENTS glslangValidator)
 
 if (WIN32)
     FetchContent_Declare(
@@ -72,7 +72,7 @@ foreach (GLSL ${GLSL_SOURCE_FILES})
     add_custom_command(
             OUTPUT ${SPIRV}
             COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/shaders/"
-            COMMAND ${Vulkan_GLSLC_EXECUTABLE} ${GLSL} -o ${SPIRV} ${GLSLC_DEFINE} "--target-env=vulkan1.2"
+            COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} "--target-env" "vulkan1.2" -V ${GLSL} -o ${SPIRV} ${GLSLC_DEFINE}
             DEPENDS ${GLSL})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach (GLSL)
@@ -106,7 +106,7 @@ add_executable(vulkan_splatting main.cpp
 
 add_dependencies(vulkan_splatting Shaders)
 
-target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
+target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${glm_SOURCE_DIR})
 
 target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)

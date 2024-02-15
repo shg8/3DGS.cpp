@@ -25,7 +25,7 @@ public:
 
     static std::shared_ptr<Buffer> staging(std::shared_ptr<VulkanContext> context, unsigned long size);
 
-    static std::shared_ptr<Buffer> storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing = false, VkDeviceSize alignment = 0);
+    static std::shared_ptr<Buffer> storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing = false, vk::DeviceSize alignment = 0);
 
     void upload(const void *data, uint32_t size, uint32_t offset = 0);
 
