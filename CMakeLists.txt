@@ -3,23 +3,48 @@ project(vulkan_splatting)
 
 include(FetchContent)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan COMPONENTS glslc)
 
-find_package(glfw3 3.3 REQUIRED)
-find_package(glm REQUIRED)
+if (MSVC)
+    FetchContent_Declare(
+            glfw
+            GIT_REPOSITORY https://github.com/glfw/glfw
+            GIT_TAG 3.3.9
+    )
 
-find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
+    FetchContent_GetProperties(glfw)
+    if (NOT glfw_POPULATED)
+        FetchContent_Populate(glfw)
+
+        set(GLFW_INSTALL OFF CACHE INTERNAL "Create GLFW installation target")
+        set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build GLFW documentation")
+        set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build GLFW test programs")
+        set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build GLFW examples")
+
+        add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
+    endif()
+
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup")
+
+    FetchContent_Declare(
+            glm
+            GIT_REPOSITORY https://github.com/g-truc/glm
+            GIT_TAG 1.0.0
+    )
+    FetchContent_MakeAvailable(glm)
+else ()
+    find_package(glfw3 3.3 REQUIRED)
+    find_package(glm REQUIRED)
+endif ()
+
 
 FetchContent_Declare(libenvpp
         GIT_REPOSITORY https://github.com/ph3at/libenvpp.git
         GIT_TAG v1.0.0
 )
 FetchContent_MakeAvailable(libenvpp)
-
-FetchContent_Declare(fuchsia_radix_sort GIT_REPOSITORY https://github.com/juliusikkala/fuchsia_radix_sort.git GIT_TAG main)
-FetchContent_MakeAvailable(fuchsia_radix_sort)
 
 if (APPLE)
     add_compile_definitions(__APPLE__)
@@ -45,7 +70,7 @@ foreach (GLSL ${GLSL_SOURCE_FILES})
     add_custom_command(
             OUTPUT ${SPIRV}
             COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/shaders/"
-            COMMAND ${glslc_executable} ${GLSL} -o ${SPIRV} ${GLSLC_DEFINE} "--target-env=vulkan1.2"
+            COMMAND ${Vulkan_GLSLC_EXECUTABLE} ${GLSL} -o ${SPIRV} ${GLSLC_DEFINE} "--target-env=vulkan1.2"
             DEPENDS ${GLSL})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach (GLSL)
@@ -79,9 +104,9 @@ add_executable(vulkan_splatting main.cpp
 
 add_dependencies(vulkan_splatting Shaders)
 
-target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${VK_RADIX_SORT_INCLUDE_DIRS})
+target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
 
-target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp vk-radix-sort)
+target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)
 
 add_custom_command(TARGET vulkan_splatting POST_BUILD

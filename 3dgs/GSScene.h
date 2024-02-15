@@ -24,7 +24,8 @@ class GSScene {
 public:
     explicit GSScene(const std::string& filename)
         : filename(filename) {
-        if (!std::filesystem::exists(filename)) {
+        std::filesystem::path file = std::filesystem::current_path() / filename;
+        if (!std::filesystem::exists(file)) {
             throw std::runtime_error("File does not exist");
         }
     }

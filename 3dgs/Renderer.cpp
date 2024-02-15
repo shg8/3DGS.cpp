@@ -12,9 +12,8 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "../vulkan/Utils.h"
-#include "radix_sort/platforms/vk/radix_sort_vk.h"
 
-#define SORT_ALLOCATE_MULTIPLIER 1000
+#define SORT_ALLOCATE_MULTIPLIER 100
 
 void Renderer::initialize() {
     initializeVulkan();
@@ -74,6 +73,7 @@ void Renderer::initializeVulkan() {
     vk::PhysicalDeviceVulkan11Features pdf11{};
     vk::PhysicalDeviceVulkan12Features pdf12{};
     pdf.shaderInt64 = true;
+    pdf12.shaderFloat16 = true;
     pdf12.shaderBufferInt64Atomics = true;
     pdf12.shaderSharedInt64Atomics = true;
 
@@ -569,5 +569,5 @@ void Renderer::updateUniforms() {
 }
 
 Renderer::~Renderer() {
-    radix_sort_vk_destroy(radixSortPipeline, context->device.get(), nullptr);
+
 }

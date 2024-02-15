@@ -23,7 +23,7 @@ struct VertexStorage {
 void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    std::ifstream plyFile(filename);
+    std::ifstream plyFile(filename, std::ios::binary);
     loadPlyHeader(plyFile);
 
     vertexBuffer = createBuffer(context, header.numVertices * sizeof(Vertex));
@@ -32,6 +32,8 @@ void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
 
     for (auto i = 0; i < header.numVertices; i++) {
         static_assert(sizeof(VertexStorage) == 62 * sizeof(float));
+        assert(plyFile.is_open());
+        assert(!plyFile.eof());
         VertexStorage vertexStorage;
         plyFile.read(reinterpret_cast<char *>(&vertexStorage), sizeof(VertexStorage));
         verteces[i].position = glm::vec4(vertexStorage.position, 1.0f);
