@@ -1,6 +1,8 @@
 # VulkanSplatting
 VulkanSplatting is an (not-yet-highly-) optimized, cross-platform implementation of [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) using the [Vulkan API](https://www.khronos.org/vulkan/) and compute pipelines.
 
+[![Windows + Linux](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml)
+
 ## Building
 ### Linux
 VulkanSplatting requires the following dependencies:
