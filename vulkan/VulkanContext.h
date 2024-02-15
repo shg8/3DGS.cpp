@@ -74,6 +74,8 @@ public:
 
     VulkanContext::QueueFamilyIndices findQueueFamilies();
 
+    void createQueryPool();
+
     void createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeatures, vk::PhysicalDeviceVulkan11Features deviceFeatures11, vk::PhysicalDeviceVulkan12Features deviceFeatures12);
 
     void createDescriptorPool(uint8_t framesInFlight);
@@ -92,6 +94,8 @@ public:
     VmaAllocator allocator;
 
     vk::UniqueDescriptorPool descriptorPool;
+    vk::UniqueQueryPool queryPool;
+
 private:
     vk::DynamicLoader dl;
     std::vector<std::string> instanceExtensions;

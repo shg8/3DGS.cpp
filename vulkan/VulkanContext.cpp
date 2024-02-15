@@ -186,6 +186,13 @@ VulkanContext::QueueFamilyIndices VulkanContext::findQueueFamilies() {
     return indices;
 }
 
+void VulkanContext::createQueryPool() {
+    vk::QueryPoolCreateInfo queryPoolCreateInfo = {};
+    queryPoolCreateInfo.queryType = vk::QueryType::eTimestamp;
+    queryPoolCreateInfo.queryCount = 20;
+    queryPool = device->createQueryPoolUnique(queryPoolCreateInfo);
+}
+
 void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeatures,
                                         vk::PhysicalDeviceVulkan11Features deviceFeatures11,
                                         vk::PhysicalDeviceVulkan12Features deviceFeatures12) {
@@ -212,6 +219,10 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     createInfo.pNext = &deviceFeatures11;
     deviceFeatures11.pNext = &deviceFeatures12;
 
+    vk::PhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {};
+    hostQueryResetFeatures.hostQueryReset = VK_TRUE;
+    deviceFeatures12.pNext = &hostQueryResetFeatures;
+
     device = physicalDevice.createDeviceUnique(createInfo);
 
     for (auto unique_queue_family: uniqueQueueFamilies) {
@@ -235,6 +246,7 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     // Create VMA
     setupVma();
     createCommandPool();
+    createQueryPool();
 }
 
 vk::UniqueCommandBuffer VulkanContext::beginOneTimeCommandBuffer() {

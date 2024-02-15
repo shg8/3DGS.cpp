@@ -105,6 +105,8 @@ add_executable(vulkan_splatting main.cpp
         vulkan/pipelines/ComputePipeline.h
         vulkan/Swapchain.cpp
         vulkan/Swapchain.h
+        vulkan/QueryManager.cpp
+        vulkan/QueryManager.h
 )
 
 add_dependencies(vulkan_splatting Shaders)
