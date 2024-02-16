@@ -58,6 +58,12 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
         "shaders/*.comp"
 )
 
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_compile_definitions(DEBUG)
+else ()
+    add_compile_definitions(NDEBUG)
+endif ()
+
 if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT APPLE)
     set(GLSLC_DEFINE "-DDEBUG")
 else ()

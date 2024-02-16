@@ -66,8 +66,17 @@ int main(int argc, char** argv) {
         config.immediateSwapchain = args::get(immediateSwapchainFlag);
     }
 
+#ifndef DEBUG
+    try {
+#endif
     auto renderer = Renderer(config);
     renderer.initialize();
     renderer.run();
+#ifndef DEBUG
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+#endif
     return 0;
 }
