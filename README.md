@@ -10,6 +10,12 @@ VulkanSplatting is an (not-yet-highly-) optimized, cross-platform implementation
 ./vulkan_splatting [options] <input_file.ply>
 ```
 
+### Options
+- `-h`, `--help`: Show help message and exit
+- `-v`, `--validation-layers`: Enable Vulkan validation layers
+- `-d`, `--device`: Select physical device by index
+- `-i`, `--immediate-swapchain`: Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)
+
 ## Prebuilt Binaries
 We provide prebuilt binaries on amd64 for both Windows and Linux for each commit. There're available under the *Artifacts* section of each run [here](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml).
 
@@ -30,9 +36,3 @@ A full CMake configure command is as follows:
 mkdir .\VulkanSplatting\build
 cmake -DCMAKE_BUILD_TYPE=Release -DVULKAN_SDK=\INSTALL\LOCATION\OF\YOUR\SDK -S .\VulkanSplatting -B .\VulkanSplatting\build
 ```
-
-### Options
-- `-h`, `--help`: Show help message and exit
-- `-v`, `--validation-layers`: Enable Vulkan validation layers
-- `-d`, `--device`: Select physical device by index
-- `-i`, `--immediate-swapchain`: Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)
