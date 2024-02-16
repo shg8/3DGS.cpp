@@ -5,6 +5,8 @@ name: CMake on multiple platforms
 on:
   push:
     branches: [ "main", "bugfix/workflow" ]
+    paths-ignore:
+      - '**/README.md'
   pull_request:
     branches: [ "main" ]
 
