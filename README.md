@@ -3,6 +3,8 @@ VulkanSplatting is an (not-yet-highly-) optimized, cross-platform implementation
 
 [![Windows + Linux](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml)
 
+![VulkanSplatting Demo macOS](https://github.com/shg8/VulkanSplatting/assets/38004233/66542056-ce30-4998-a612-dd4f6792599e)
+
 ## Command Line Usage
 ```
 ./vulkan_splatting [options] <input_file.ply>
