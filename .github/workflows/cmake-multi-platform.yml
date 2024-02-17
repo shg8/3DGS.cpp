@@ -68,7 +68,7 @@ jobs:
       uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:
         vulkan-query-version: latest
-        vulkan-components: Vulkan-Headers, Vulkan-Loader, Glslang
+        vulkan-components: Vulkan-Headers, Vulkan-Loader, Glslang, SPIRV-Tools
         vulkan-use-cache: true
 
     - name: Configure CMake
