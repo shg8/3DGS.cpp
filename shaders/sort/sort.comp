@@ -37,7 +37,9 @@
 #extension GL_KHR_shader_subgroup_arithmetic: enable
 #extension GL_KHR_shader_subgroup_ballot: enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#ifndef APPLE
 #extension GL_EXT_shader_atomic_int64 : enable
+#endif
 
 #define WORKGROUP_SIZE 256// assert WORKGROUP_SIZE >= RADIX_SORT_BINS
 #define RADIX_SORT_BINS 256U
@@ -85,7 +87,12 @@ shared uint[RADIX_SORT_BINS / SUBGROUP_SIZE] sums;// subgroup reductions
 shared uint[RADIX_SORT_BINS] global_offsets;// global exclusive scan (prefix sum)
 
 struct BinFlags {
+#ifndef APPLE
     key_t flags[WORKGROUP_SIZE / BITS];
+#else
+    uint flags1[WORKGROUP_SIZE / BITS];
+    uint flags2[WORKGROUP_SIZE / BITS];
+#endif
 };
 shared BinFlags[RADIX_SORT_BINS] bin_flags;
 
@@ -133,7 +140,12 @@ void main() {
         // initialize bin flags
         if (lID < RADIX_SORT_BINS) {
             for (int i = 0; i < WORKGROUP_SIZE / BITS; i++) {
+                #ifndef APPLE
                 bin_flags[lID].flags[i] = 0U;// init all bin flags to 0
+                #else
+                bin_flags[lID].flags1[i] = 0U;// init all bin flags to 0
+                bin_flags[lID].flags2[i] = 0U;// init all bin flags to 0
+                #endif
             }
         }
         barrier();
@@ -149,7 +161,12 @@ void main() {
             // offset for group
             binOffset = global_offsets[binID];
             // add bit to flag
+            #ifndef APPLE
             atomicAdd(bin_flags[binID].flags[flags_bin], flags_bit);
+            #else
+            atomicAdd(bin_flags[binID].flags1[flags_bin], uint(flags_bit));
+            atomicAdd(bin_flags[binID].flags2[flags_bin], uint(flags_bit >> 32));
+            #endif
         }
         barrier();
 
@@ -158,11 +175,24 @@ void main() {
             uint prefix = 0;
             uint count = 0;
             for (uint i = 0; i < WORKGROUP_SIZE / BITS; i++) {
-                const key_t bits = bin_flags[binID].flags[i];
+                #ifndef APPLE
+                    const key_t bits = bin_flags[binID].flags[i];
+                #else
+                    const uint flag1 = bin_flags[binID].flags1[i];
+                    const uint flag2 = bin_flags[binID].flags2[i];
+                #endif
                 #if BITS == 64
-                const uint full_count = bitCount(uint(bits)) + bitCount(uint(bits >> 32));
-                const key_t partial_bits = bits & (flags_bit - 1);
-                const uint partial_count = bitCount(uint(partial_bits)) + bitCount(uint(partial_bits >> 32));
+                    #ifndef APPLE
+                        const uint full_count = bitCount(uint(bits)) + bitCount(uint(bits >> 32));
+                        const key_t partial_bits = bits & (flags_bit - 1);
+                        const uint partial_count = bitCount(uint(partial_bits)) + bitCount(uint(partial_bits >> 32));
+                    #else
+                        const uint full_count = bitCount(flag1) + bitCount(flag2);
+                        const uint64_t f = flags_bit - 1;
+                        const uint partial_bits1 = flag1 & uint(f);
+                        const uint partial_bits2 = flag2 & uint(f >> 32);
+                        const uint partial_count = bitCount(partial_bits1) + bitCount(partial_bits2);
+                    #endif
                 #else
                 const uint full_count = bitCount(bits);
                 const uint partial_count = bitCount(bits & (flags_bit - 1));

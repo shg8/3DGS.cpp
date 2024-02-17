@@ -11,6 +11,8 @@
 #include "../vulkan/Swapchain.h"
 #include <glm/gtc/quaternion.hpp>
 
+#include "../vulkan/QueryManager.h"
+
 struct RendererConfiguration {
     bool enableVulkanValidationLayers = false;
     std::optional<uint8_t> physicalDeviceId = std::nullopt;
@@ -64,6 +66,8 @@ public:
 
     void handleInput();
 
+    void retrieveTimestamps();
+
     void run();
 
     ~Renderer();
@@ -72,6 +76,7 @@ private:
     std::shared_ptr<Window> window;
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<GSScene> scene;
+    std::shared_ptr<QueryManager> queryManager = std::make_shared<QueryManager>();
 
     std::shared_ptr<ComputePipeline> preprocessPipeline;
     std::shared_ptr<ComputePipeline> renderPipeline;

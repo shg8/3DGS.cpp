@@ -9,8 +9,8 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                        VkDebugUtilsMessageTypeFlagsEXT messageType,
-                       const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
-    const char *severity = "???";
+                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+    const char* severity = "???";
     if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
         severity = "VERBOSE";
     } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
@@ -21,7 +21,7 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         severity = "ERROR";
     }
 
-    const char *type = "???";
+    const char* type = "???";
     if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
         type = "GENERAL";
     } else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
@@ -35,10 +35,10 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     return VK_FALSE;
 }
 
-VulkanContext::VulkanContext(const std::vector<std::string> &instance_extensions,
-                             const std::vector<std::string> &device_extensions, bool validation_layers_enabled)
-        : instanceExtensions(instance_extensions), deviceExtensions(device_extensions),
-          validationLayersEnabled(validation_layers_enabled) {
+VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions,
+                             const std::vector<std::string>& device_extensions, bool validation_layers_enabled)
+    : instanceExtensions(instance_extensions), deviceExtensions(device_extensions),
+      validationLayersEnabled(validation_layers_enabled) {
 #ifdef __APPLE__
     instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     deviceExtensions.push_back("VK_KHR_portability_subset");
@@ -48,13 +48,13 @@ VulkanContext::VulkanContext(const std::vector<std::string> &instance_extensions
         instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
     auto getInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>(
-            "vkGetInstanceProcAddr");
+        "vkGetInstanceProcAddr");
     VULKAN_HPP_DEFAULT_DISPATCHER.init(getInstanceProcAddr);
 }
 
 void VulkanContext::createInstance() {
     vk::ApplicationInfo appInfo = {
-            "Vulkan Splatting", VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_3
+        "Vulkan Splatting", VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_3
     };
 
     std::vector<const char *> requiredLayers;
@@ -64,17 +64,19 @@ void VulkanContext::createInstance() {
 
     auto instanceExtensionsCharPtr = Utils::stringVectorToCharPtrVector(instanceExtensions);
     vk::StructureChain<vk::InstanceCreateInfo, vk::DebugUtilsMessengerCreateInfoEXT> createInfoChain = {
-            {
-                    {}, &appInfo, (uint32_t) requiredLayers.size(), requiredLayers.data(), (uint32_t) instanceExtensions.size(),
-                    instanceExtensionsCharPtr.data()
-            },
-            {
-                    {}, vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo,
-                                  vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-                                  vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
-                                  vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-                                                                    debugCallback
-            }
+        {
+            {}, &appInfo, (uint32_t) requiredLayers.size(), requiredLayers.data(), (uint32_t) instanceExtensions.size(),
+            instanceExtensionsCharPtr.data()
+        },
+        {
+            {},
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo,
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+            debugCallback
+        }
     };
 
 #ifdef __APPLE__
@@ -94,9 +96,9 @@ bool VulkanContext::isDeviceSuitable(vk::PhysicalDevice device, std::optional<vk
     auto features = device.getFeatures();
 
     auto supportedExtensions = device.enumerateDeviceExtensionProperties();
-    for (auto &extension: deviceExtensions) {
+    for (auto& extension: deviceExtensions) {
         if (std::find_if(supportedExtensions.begin(), supportedExtensions.end(),
-                         [&extension](const vk::ExtensionProperties &supportedExtension) {
+                         [&extension](const vk::ExtensionProperties& supportedExtension) {
                              return strcmp(extension.c_str(), supportedExtension.extensionName) == 0;
                          }) == supportedExtensions.end()) {
             return false;
@@ -124,7 +126,7 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
     auto devices = instance->enumeratePhysicalDevices();
 
     int ind = 0;
-    for (auto &device: devices) {
+    for (auto& device: devices) {
         std::cout << "[" << ind++ << "] " << device.getProperties().deviceName << std::endl;
     }
 
@@ -142,14 +144,14 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
     }
 
     auto suitableDevices = std::vector<vk::PhysicalDevice>{};
-    for (auto &device: devices) {
+    for (auto& device: devices) {
         if (isDeviceSuitable(device, surface)) {
             suitableDevices.push_back(device);
         }
     }
 
     physicalDevice = suitableDevices[0];
-    for (auto &device: suitableDevices) {
+    for (auto& device: suitableDevices) {
         auto properties = device.getProperties();
         if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
             physicalDevice = device;
@@ -165,7 +167,7 @@ VulkanContext::QueueFamilyIndices VulkanContext::findQueueFamilies() {
     auto queueFamilies = physicalDevice.getQueueFamilyProperties();
 
     for (uint32_t i = 0; i < queueFamilies.size(); i++) {
-        auto &queueFamily = queueFamilies[i];
+        auto& queueFamily = queueFamilies[i];
         if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphicsFamily = i;
         }
@@ -184,12 +186,21 @@ VulkanContext::QueueFamilyIndices VulkanContext::findQueueFamilies() {
     return indices;
 }
 
-void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeatures, vk::PhysicalDeviceVulkan11Features deviceFeatures11, vk::PhysicalDeviceVulkan12Features deviceFeatures12) {
+void VulkanContext::createQueryPool() {
+    vk::QueryPoolCreateInfo queryPoolCreateInfo = {};
+    queryPoolCreateInfo.queryType = vk::QueryType::eTimestamp;
+    queryPoolCreateInfo.queryCount = 20;
+    queryPool = device->createQueryPoolUnique(queryPoolCreateInfo);
+}
+
+void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeatures,
+                                        vk::PhysicalDeviceVulkan11Features deviceFeatures11,
+                                        vk::PhysicalDeviceVulkan12Features deviceFeatures12) {
     QueueFamilyIndices indices = findQueueFamilies();
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
-    std::set < uint32_t > uniqueQueueFamilies = {
-            indices.graphicsFamily.value(), indices.computeFamily.value(),
-            indices.presentFamily.value()
+    std::set<uint32_t> uniqueQueueFamilies = {
+        indices.graphicsFamily.value(), indices.computeFamily.value(),
+        indices.presentFamily.value()
     };
 
     float queuePriority = 1.0f;
@@ -202,17 +213,21 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     auto deviceExtensionsCharPtr = Utils::stringVectorToCharPtrVector(deviceExtensions);
 
     vk::DeviceCreateInfo createInfo = {
-            {}, (uint32_t) queueCreateInfos.size(), queueCreateInfos.data(), 0, nullptr,
-            (uint32_t) deviceExtensionsCharPtr.size(), deviceExtensionsCharPtr.data(), &deviceFeatures
+        {}, (uint32_t) queueCreateInfos.size(), queueCreateInfos.data(), 0, nullptr,
+        (uint32_t) deviceExtensionsCharPtr.size(), deviceExtensionsCharPtr.data(), &deviceFeatures
     };
     createInfo.pNext = &deviceFeatures11;
     deviceFeatures11.pNext = &deviceFeatures12;
+
+    vk::PhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {};
+    hostQueryResetFeatures.hostQueryReset = VK_TRUE;
+    deviceFeatures12.pNext = &hostQueryResetFeatures;
 
     device = physicalDevice.createDeviceUnique(createInfo);
 
     for (auto unique_queue_family: uniqueQueueFamilies) {
         auto queue = device->getQueue(unique_queue_family, 0);
-        std::set < Queue::Type > types;
+        std::set<Queue::Type> types;
         if (unique_queue_family == indices.graphicsFamily.value()) {
             types.insert(Queue::Type::GRAPHICS);
         }
@@ -223,7 +238,7 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
             types.insert(Queue::Type::PRESENT);
         }
 
-        for (auto type : types) {
+        for (auto type: types) {
             queues[type] = Queue{types, unique_queue_family, 0, queue};
         }
     }
@@ -231,6 +246,7 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     // Create VMA
     setupVma();
     createCommandPool();
+    createQueryPool();
 }
 
 vk::UniqueCommandBuffer VulkanContext::beginOneTimeCommandBuffer() {
@@ -246,7 +262,7 @@ vk::UniqueCommandBuffer VulkanContext::beginOneTimeCommandBuffer() {
     return commandBuffer;
 }
 
-void VulkanContext::endOneTimeCommandBuffer(vk::UniqueCommandBuffer &&commandBuffer, Queue::Type queue) {
+void VulkanContext::endOneTimeCommandBuffer(vk::UniqueCommandBuffer&& commandBuffer, Queue::Type queue) {
     commandBuffer->end();
     vk::SubmitInfo submitInfo = {};
     submitInfo.commandBufferCount = 1;
@@ -274,16 +290,18 @@ void VulkanContext::createCommandPool() {
 }
 
 void VulkanContext::createDescriptorPool(uint8_t framesInFlight) {
+    // get max number of descriptor sets from physical device
     std::vector<vk::DescriptorPoolSize> poolSizes = {
-            {vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(framesInFlight * 10)},
-            {vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(framesInFlight * 10)}
+        {vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(framesInFlight * 10)},
+        {vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(framesInFlight * 50)},
+        {vk::DescriptorType::eStorageImage, static_cast<uint32_t>(framesInFlight * 10)}
     };
 
-    vk::DescriptorPoolCreateInfo poolInfo = {};
-    poolInfo.poolSizeCount = (uint32_t) poolSizes.size();
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = physicalDevice.getProperties().limits.maxBoundDescriptorSets;
-    poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+    vk::DescriptorPoolCreateInfo poolInfo{
+        vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        100, static_cast<uint32_t>(poolSizes.size()),
+        poolSizes.data()
+    };
 
     descriptorPool = device->createDescriptorPoolUnique(poolInfo);
 }

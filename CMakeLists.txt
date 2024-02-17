@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan COMPONENTS glslangValidator)
 
-if (WIN32)
+if (WIN32 OR APPLE)
     FetchContent_Declare(
             glfw
             GIT_REPOSITORY https://github.com/glfw/glfw
@@ -25,6 +25,8 @@ if (WIN32)
 
         add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
     endif()
+
+    set(GLM_ENABLE_CXX_20 ON CACHE INTERNAL "Enable experimental features")
 
     FetchContent_Declare(
             glm
@@ -65,12 +67,15 @@ else ()
 endif ()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT APPLE)
-    set(GLSLC_DEFINE "-DDEBUG")
+    list(APPEND GLSLC_DEFINE "-DDEBUG")
 else ()
-    set(GLSLC_DEFINE "-DNDEBUG")
+    list(APPEND GLSLC_DEFINE "-DNDEBUG")
 endif ()
 
-set(GLSLC_DEFINE "${GLSLC_DEFINE}")
+if (APPLE)
+    # append -DAPPLE to GLSLC_DEFINE
+    list(APPEND GLSLC_DEFINE "-DAPPLE")
+endif ()
 
 foreach (GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME)
@@ -108,6 +113,8 @@ add_executable(vulkan_splatting main.cpp
         vulkan/pipelines/ComputePipeline.h
         vulkan/Swapchain.cpp
         vulkan/Swapchain.h
+        vulkan/QueryManager.cpp
+        vulkan/QueryManager.h
 )
 
 add_dependencies(vulkan_splatting Shaders)
