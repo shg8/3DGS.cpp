@@ -176,17 +176,23 @@ void main() {
             uint count = 0;
             for (uint i = 0; i < WORKGROUP_SIZE / BITS; i++) {
                 #ifndef APPLE
-                const key_t bits = bin_flags[binID].flags[i];
+                    const key_t bits = bin_flags[binID].flags[i];
                 #else
-                const uint flag1 = bin_flags[binID].flags1[i];
-                const uint flag2 = bin_flags[binID].flags2[i];
+                    const uint flag1 = bin_flags[binID].flags1[i];
+                    const uint flag2 = bin_flags[binID].flags2[i];
                 #endif
                 #if BITS == 64
-                const uint full_count = bitCount(flag1) + bitCount(flag2);
-                const uint64_t f = flags_bit - 1;
-                const uint partial_bits1 = flag1 & uint(f);
-                const uint partial_bits2 = flag2 & uint(f >> 32);
-                const uint partial_count = bitCount(partial_bits1) + bitCount(partial_bits2);
+                    #ifndef APPLE
+                        const uint full_count = bitCount(uint(bits)) + bitCount(uint(bits >> 32));
+                        const key_t partial_bits = bits & (flags_bit - 1);
+                        const uint partial_count = bitCount(uint(partial_bits)) + bitCount(uint(partial_bits >> 32));
+                    #else
+                        const uint full_count = bitCount(flag1) + bitCount(flag2);
+                        const uint64_t f = flags_bit - 1;
+                        const uint partial_bits1 = flag1 & uint(f);
+                        const uint partial_bits2 = flag2 & uint(f >> 32);
+                        const uint partial_count = bitCount(partial_bits1) + bitCount(partial_bits2);
+                    #endif
                 #else
                 const uint full_count = bitCount(bits);
                 const uint partial_count = bitCount(bits & (flags_bit - 1));
