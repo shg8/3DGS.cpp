@@ -13,7 +13,7 @@
 
 #include "../vulkan/Utils.h"
 
-#define SORT_ALLOCATE_MULTIPLIER 50
+#define SORT_ALLOCATE_MULTIPLIER 10
 
 void Renderer::initialize() {
     initializeVulkan();
@@ -470,6 +470,9 @@ void Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
     uint32_t numInstances = totalSumBufferHost->readOne<uint32_t>();
     // std::cout << "Num instances: " << numInstances << std::endl;
+    if (numInstances > scene->getNumVertices() * SORT_ALLOCATE_MULTIPLIER) {
+        throw std::runtime_error("Gaussian instantiation out of memory");
+    }
     assert(numInstances <= scene->getNumVertices() * SORT_ALLOCATE_MULTIPLIER);
     for (auto i = 0; i < 8; i++) {
         sortHistPipeline->bind(renderCommandBuffer, 0, i % 2 == 0 ? 0 : 1);
