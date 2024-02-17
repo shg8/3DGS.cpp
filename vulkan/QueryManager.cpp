@@ -1,7 +1,3 @@
-//
-// Created by Steven on 2/15/24.
-//
-
 #include "QueryManager.h"
 
 #include <iostream>

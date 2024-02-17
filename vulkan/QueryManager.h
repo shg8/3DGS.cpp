@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <sys/types.h>
 #include <vector>
+#include <chrono>
+#include <string>
 
 
 class QueryManager {

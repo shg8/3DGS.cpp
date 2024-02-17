@@ -26,6 +26,8 @@ if (WIN32 OR APPLE)
         add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
     endif()
 
+    set(GLM_ENABLE_CXX_20 ON CACHE INTERNAL "Enable experimental features")
+
     FetchContent_Declare(
             glm
             GIT_REPOSITORY https://github.com/g-truc/glm
