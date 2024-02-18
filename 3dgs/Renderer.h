@@ -3,6 +3,7 @@
 
 #define GLM_SWIZZLE
 
+#include <args.hxx>
 #include <atomic>
 
 #include "../vulkan/Window.h"
@@ -11,6 +12,8 @@
 #include "../vulkan/Swapchain.h"
 #include <glm/gtc/quaternion.hpp>
 
+#include "GUIManager.h"
+#include "../vulkan/ImguiManager.h"
 #include "../vulkan/QueryManager.h"
 
 struct RendererConfiguration {
@@ -22,6 +25,7 @@ struct RendererConfiguration {
     float fov = 45.0f;
     float near = 0.2f;
     float far = 1000.0f;
+    bool enableGui = true;
 };
 
 class Renderer {
@@ -62,6 +66,8 @@ public:
 
     explicit Renderer(RendererConfiguration configuration);
 
+    void createGui();
+
     void initialize();
 
     void handleInput();
@@ -75,8 +81,10 @@ private:
     RendererConfiguration configuration;
     std::shared_ptr<Window> window;
     std::shared_ptr<VulkanContext> context;
+    std::shared_ptr<ImguiManager> imguiManager;
     std::shared_ptr<GSScene> scene;
     std::shared_ptr<QueryManager> queryManager = std::make_shared<QueryManager>();
+    GUIManager guiManager {};
 
     std::shared_ptr<ComputePipeline> preprocessPipeline;
     std::shared_ptr<ComputePipeline> renderPipeline;
@@ -106,7 +114,6 @@ private:
     std::vector<vk::UniqueFence> inflightFences;
 
     std::shared_ptr<Swapchain> swapchain;
-
 
     Camera camera {
         .position = glm::vec3(0.0f, 0.0f, 0.0f),

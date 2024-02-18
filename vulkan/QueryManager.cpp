@@ -1,5 +1,6 @@
 #include "QueryManager.h"
 
+#include <functional>
 #include <iostream>
 
 uint32_t QueryManager::registerQuery(const std::string& name) {
@@ -18,12 +19,13 @@ uint32_t QueryManager::getQueryId(const std::string& name) {
     return 0;
 }
 
-void QueryManager::parseResults(const std::vector<uint64_t>& results) {
+std::unordered_map<std::string, uint64_t> QueryManager::parseResults(const std::vector<uint64_t>& results) {
     // all names end with _start or _end
     // calculate the time between the two
     // push the results to the results map
     // print every 1 seconds
     std::lock_guard<std::mutex> lock(mutex);
+    std::unordered_map<std::string, uint64_t> resultsMap;
     for (auto& [name, id] : registry) {
         if (name.ends_with("_start")) {
             auto endName = name.substr(0, name.size() - 5) + "end";
@@ -31,26 +33,24 @@ void QueryManager::parseResults(const std::vector<uint64_t>& results) {
                 auto start = results[id];
                 auto end = results[registry[endName]];
                 auto diff = end - start;
-                if (this->results.contains(name)) {
-                    this->results[name].push_back(diff);
-                } else {
-                    this->results[name] = {diff};
-                }
+                auto truncated = name.substr(0, name.size() - 6);
+                resultsMap[truncated] = diff;
             }
         }
     }
-    auto now = std::chrono::high_resolution_clock::now();
-    if (now - lastPrint > std::chrono::seconds(1)) {
-        lastPrint = now;
-        for (auto& [name, result] : this->results) {
-            auto truncated = name.substr(0, name.size() - 6);
-            std::cout << truncated << ": ";
-            // calculate average
-            uint64_t sum = 0;
-            for (auto& r : result) {
-                sum += r;
-            }
-            std::cout << sum / result.size() / 1000000.0 << "ms" << std::endl;
-        }
-    }
+    return resultsMap;
+    // auto now = std::chrono::high_resolution_clock::now();
+    // if (now - lastPrint > std::chrono::seconds(1)) {
+    //     lastPrint = now;
+    //     for (auto& [name, result] : this->results) {
+    //         auto truncated = name.substr(0, name.size() - 6);
+    //         std::cout << truncated << ": ";
+    //         // calculate average
+    //         uint64_t sum = 0;
+    //         for (auto& r : result) {
+    //             sum += r;
+    //         }
+    //         std::cout << sum / result.size() / 1000000.0 << "ms" << std::endl;
+    //     }
+    // }
 }

@@ -16,7 +16,7 @@ void Swapchain::createSwapchain() {
 
     auto [width, height] = window->getFramebufferSize();
 
-    vk::SurfaceFormatKHR surfaceFormat = formats[0];
+    surfaceFormat = formats[0];
     for (const auto&availableFormat: formats) {
         if (availableFormat.format == vk::Format::eB8G8R8A8Unorm &&
             availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
@@ -25,7 +25,7 @@ void Swapchain::createSwapchain() {
         }
     }
 
-    vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
+    presentMode = vk::PresentModeKHR::eFifo;
     for (const auto&availablePresentMode: presentModes) {
         if (immediate && availablePresentMode == vk::PresentModeKHR::eImmediate) {
             presentMode = availablePresentMode;
@@ -44,7 +44,7 @@ void Swapchain::createSwapchain() {
         extent.height = std::clamp(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
     }
 
-    uint32_t imageCount = capabilities.minImageCount + 1;
+    imageCount = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount) {
         imageCount = capabilities.maxImageCount;
     }

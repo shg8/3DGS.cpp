@@ -6,13 +6,15 @@
 #include <vector>
 #include <chrono>
 #include <string>
+#include <__functional/function.h>
 
 
 class QueryManager {
 public:
     uint32_t registerQuery(const std::string &name);
     [[nodiscard]] uint32_t getQueryId(const std::string &name);
-    void parseResults(const std::vector<uint64_t>& results);
+
+    std::unordered_map<std::string, uint64_t> parseResults(const std::vector<uint64_t>& results);
     int nextId = 0;
 private:
     std::mutex mutex;

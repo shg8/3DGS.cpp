@@ -14,6 +14,10 @@ public:
     vk::Extent2D swapchainExtent;
     std::vector<std::shared_ptr<Image>> swapchainImages;
     std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::Format swapchainFormat;
+    vk::PresentModeKHR presentMode;
+    uint32_t imageCount;
 
     void recreate();
 private:
@@ -21,8 +25,6 @@ private:
     std::shared_ptr<Window> window;
 
     bool immediate = false;
-
-    vk::Format swapchainFormat;
 
     void createSwapchain();
 

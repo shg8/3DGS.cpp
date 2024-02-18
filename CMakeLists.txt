@@ -50,6 +50,12 @@ FetchContent_Declare(libenvpp
 )
 FetchContent_MakeAvailable(libenvpp)
 
+FetchContent_Declare(imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG v1.90.3
+)
+FetchContent_MakeAvailable(imgui)
+
 if (APPLE)
     add_compile_definitions(__APPLE__)
 endif ()
@@ -95,6 +101,15 @@ add_custom_target(
 
 include_directories(third_party)
 
+file(GLOB EXTERNAL_SOURCE
+        ${imgui_SOURCE_DIR}/*.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+        third_party/implot/implot.cpp
+        third_party/implot/implot_demo.cpp
+        third_party/implot/implot_items.cpp
+)
+
 add_executable(vulkan_splatting main.cpp
         vulkan/VulkanContext.cpp
         3dgs/Renderer.cpp
@@ -113,13 +128,24 @@ add_executable(vulkan_splatting main.cpp
         vulkan/pipelines/ComputePipeline.h
         vulkan/Swapchain.cpp
         vulkan/Swapchain.h
+        ${EXTERNAL_SOURCE}
+        vulkan/ImguiManager.cpp
+        vulkan/ImguiManager.h
         vulkan/QueryManager.cpp
         vulkan/QueryManager.h
+        3dgs/GUIManager.cpp
+        3dgs/GUIManager.h
 )
 
 add_dependencies(vulkan_splatting Shaders)
 
-target_include_directories(vulkan_splatting PUBLIC ${Vulkan_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${glm_SOURCE_DIR})
+target_include_directories(vulkan_splatting PUBLIC
+        ${Vulkan_INCLUDE_DIRS}
+        ${GLM_INCLUDE_DIRS}
+        ${glm_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
+)
 
 target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)
