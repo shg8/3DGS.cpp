@@ -4,78 +4,8 @@
 #include <vector>
 #include <string>
 
-
 #include "imgui.h"
 #include "implot/implot.h"
-
-template<typename T>
-class RingBuffer {
-public:
-    explicit RingBuffer(size_t size = 600) : buffer(size), start(0), end(0), isFull(false) {}
-
-    void push(T value) {
-        buffer[end] = value;
-        end = (end + 1) % buffer.size();
-
-        if (isFull) {
-            start = (start + 1) % buffer.size();
-        }
-
-        isFull = end == start;
-    }
-
-    T pop() {
-        if (isEmpty()) {
-            throw std::runtime_error("Buffer is empty");
-        }
-
-        T value = buffer[start];
-        start = (start + 1) % buffer.size();
-        isFull = false;
-
-        return value;
-    }
-
-    bool isEmpty() const {
-        return !isFull && (end == start);
-    }
-
-    bool isBufferFull() const {
-        return isFull;
-    }
-
-    size_t capacity() const {
-        return buffer.size();
-    }
-
-    size_t size() const {
-        size_t size = buffer.size();
-
-        if (!isFull) {
-            if (end >= start) {
-                size = end - start;
-            } else {
-                size = buffer.size() + end - start;
-            }
-        }
-
-        return size;
-    }
-
-    T lookup(size_t index) const {
-        if (index >= size()) {
-            throw std::out_of_range("Index out of range");
-        }
-
-        return buffer[(start + index) % buffer.size()];
-    }
-
-private:
-    std::vector<T> buffer;
-    size_t start;
-    size_t end;
-    bool isFull;
-};
 
 struct ScrollingBuffer {
     int MaxSize;
