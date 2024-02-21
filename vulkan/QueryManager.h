@@ -6,7 +6,6 @@
 #include <vector>
 #include <chrono>
 #include <string>
-#include <__functional/function.h>
 
 
 class QueryManager {
