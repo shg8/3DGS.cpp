@@ -1,6 +1,7 @@
 #include "Swapchain.h"
 
 #include "spdlog/spdlog.h"
+#include <vulkan/vk_enum_string_helper.h>
 
 Swapchain::Swapchain(const std::shared_ptr<VulkanContext>&context, const std::shared_ptr<Window>&window,
                      bool immediate) : context(
@@ -26,7 +27,7 @@ void Swapchain::createSwapchain() {
             break;
         }
     }
-    spdlog::debug("Surface format: {}", surfaceFormat.format);
+    spdlog::debug("Surface format: {}", string_VkFormat(static_cast<VkFormat>(surfaceFormat.format)));
 
     presentMode = vk::PresentModeKHR::eFifo;
     for (const auto&availablePresentMode: presentModes) {
@@ -40,7 +41,7 @@ void Swapchain::createSwapchain() {
             break;
         }
     }
-    spdlog::debug("Present mode: {}", presentMode);
+    spdlog::debug("Present mode: {}", string_VkPresentModeKHR(static_cast<VkPresentModeKHR>(presentMode)));
 
     auto extent = capabilities.currentExtent;
     if (capabilities.currentExtent.width == UINT32_MAX) {
