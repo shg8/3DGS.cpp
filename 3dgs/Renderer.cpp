@@ -93,7 +93,7 @@ void Renderer::initializeVulkan() {
     vk::PhysicalDeviceVulkan12Features pdf12{};
     pdf.shaderStorageImageWriteWithoutFormat = true;
     pdf.shaderInt64 = true;
-    pdf12.shaderFloat16 = true;
+    // pdf12.shaderFloat16 = true;
     // pdf12.shaderBufferInt64Atomics = true;
     // pdf12.shaderSharedInt64Atomics = true;
 
