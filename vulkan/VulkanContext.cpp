@@ -44,6 +44,9 @@ VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions
     deviceExtensions.push_back("VK_KHR_portability_subset");
     deviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 #endif
+
+    deviceExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+
     if (validation_layers_enabled) {
         instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
@@ -191,6 +194,10 @@ void VulkanContext::createQueryPool() {
     queryPoolCreateInfo.queryType = vk::QueryType::eTimestamp;
     queryPoolCreateInfo.queryCount = 20;
     queryPool = device->createQueryPoolUnique(queryPoolCreateInfo);
+
+    auto commandBuffer = beginOneTimeCommandBuffer();
+    commandBuffer->resetQueryPool(queryPool.get(), 0, 12);
+    endOneTimeCommandBuffer(std::move(commandBuffer), Queue::GRAPHICS);
 }
 
 void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeatures,
@@ -219,9 +226,8 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     createInfo.pNext = &deviceFeatures11;
     deviceFeatures11.pNext = &deviceFeatures12;
 
-    vk::PhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {};
-    hostQueryResetFeatures.hostQueryReset = VK_TRUE;
-    deviceFeatures12.pNext = &hostQueryResetFeatures;
+    vk::PhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures {true};
+    deviceFeatures12.pNext = &dynamicRenderingFeatures;
 
     device = physicalDevice.createDeviceUnique(createInfo);
 

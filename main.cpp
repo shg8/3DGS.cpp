@@ -6,28 +6,31 @@
 
 int main(int argc, char** argv) {
     args::ArgumentParser parser("Vulkan Splatting");
-    args::HelpFlag helpFlag {parser, "help", "Display this help menu", {'h', "help"}};
-    args::Flag validationLayersFlag {parser, "validation-layers", "Enable Vulkan validation layers", {'v', "validation-layers"}};
-    args::ValueFlag<uint8_t> physicalDeviceIdFlag {parser, "physical-device", "Select physical device by index", {'d', "device"}};
-    args::Flag immediateSwapchainFlag {parser, "immediate-swapchain", "Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)", {'i', "immediate-swapchain"}};
-    args::Positional<std::string> scenePath {parser, "scene", "Path to scene file", "scene.ply"};
+    args::HelpFlag helpFlag{parser, "help", "Display this help menu", {'h', "help"}};
+    args::Flag validationLayersFlag{
+        parser, "validation-layers", "Enable Vulkan validation layers", {'v', "validation-layers"}
+    };
+    args::ValueFlag<uint8_t> physicalDeviceIdFlag{
+        parser, "physical-device", "Select physical device by index", {'d', "device"}
+    };
+    args::Flag immediateSwapchainFlag{
+        parser, "immediate-swapchain", "Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)",
+        {'i', "immediate-swapchain"}
+    };
+    args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", { "no-gui"}};
+    args::Positional<std::string> scenePath{parser, "scene", "Path to scene file", "scene.ply"};
 
-    try
-    {
+    try {
         parser.ParseCLI(argc, argv);
-    }
-    catch (const args::Completion& e)
-    {
+    } catch (const args::Completion& e) {
         std::cout << e.what();
         return 0;
     }
-    catch (const args::Help&)
-    {
+    catch (const args::Help&) {
         std::cout << parser;
         return 0;
     }
-    catch (const args::ParseError& e)
-    {
+    catch (const args::ParseError& e) {
         std::cerr << e.what() << std::endl;
         std::cerr << parser;
         return 1;
@@ -64,6 +67,10 @@ int main(int argc, char** argv) {
 
     if (immediateSwapchainFlag) {
         config.immediateSwapchain = args::get(immediateSwapchainFlag);
+    }
+
+    if (noGuiFlag) {
+        config.enableGui = false;
     }
 
 #ifndef DEBUG

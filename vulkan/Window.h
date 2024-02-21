@@ -23,8 +23,10 @@ public:
     std::array<bool, 4> getKeys();
 
     bool tick();
-private:
+
     void* window;
+
+private:
     VkSurfaceKHR surface;
 
     double lastX = 0.0;

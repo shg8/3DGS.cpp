@@ -17,6 +17,7 @@
 
 void Renderer::initialize() {
     initializeVulkan();
+    createGui();
     loadSceneToGPU();
     createPreprocessPipeline();
     createPrefixSumPipeline();
@@ -69,7 +70,10 @@ void Renderer::retrieveTimestamps() {
         throw std::runtime_error("Failed to retrieve timestamps");
     }
 
-    queryManager->parseResults(timestamps);
+    auto metrics = queryManager->parseResults(timestamps);
+    for (auto& metric: metrics) {
+        guiManager.pushMetric(metric.first, metric.second / 1000000.0);
+    }
 }
 
 void Renderer::initializeVulkan() {
@@ -110,6 +114,7 @@ void Renderer::initializeVulkan() {
 void Renderer::loadSceneToGPU() {
     scene = std::make_shared<GSScene>(configuration.scene);
     scene->load(context);
+
     // reset descriptor pool
     context->device->resetDescriptorPool(context->descriptorPool.get());
 }
@@ -145,6 +150,16 @@ void Renderer::createPreprocessPipeline() {
 }
 
 Renderer::Renderer(RendererConfiguration configuration) : configuration(std::move(configuration)) {
+}
+
+void Renderer::createGui() {
+    if (!configuration.enableGui) {
+        return;
+    }
+
+    imguiManager = std::make_shared<ImguiManager>(context, swapchain, window);
+    imguiManager->init();
+    guiManager.init();
 }
 
 void Renderer::createPrefixSumPipeline() {
@@ -380,6 +395,8 @@ void Renderer::run() {
         //     assert(data2[i] <= data2[i+1]);
         // }
     }
+
+    context->device->waitIdle();
 }
 
 void Renderer::createCommandPool() {
@@ -398,6 +415,8 @@ void Renderer::recordPreprocessCommandBuffer() {
     auto numGroups = (scene->getNumVertices() + 255) / 256;
 
     preprocessCommandBuffer->begin(vk::CommandBufferBeginInfo{});
+
+    preprocessCommandBuffer->resetQueryPool(context->queryPool.get(), 0, 12);
 
     preprocessPipeline->bind(preprocessCommandBuffer, 0, 0);
     preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("preprocess_start"));
@@ -560,15 +579,38 @@ void Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
     // image layout transition: general -> present
     imageMemoryBarrier.oldLayout = vk::ImageLayout::eGeneral;
-    imageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
     imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite;
-    imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
     imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader,
+
+    if (configuration.enableGui) {
+        imageMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader,
+                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
+    } else {
+        imageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+        renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader,
                                          vk::PipelineStageFlagBits::eBottomOfPipe,
                                          vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
+    }
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("render_end"));
+
+    if (configuration.enableGui) {
+        imguiManager->draw(renderCommandBuffer.get(), currentImageIndex, &GUIManager::buildGui);
+
+        imageMemoryBarrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
+        imageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+
+        renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                         vk::PipelineStageFlagBits::eBottomOfPipe,
+                                         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
+    }
     renderCommandBuffer->end();
 }
 
