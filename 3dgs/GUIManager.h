@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "imgui.h"
 #include "implot/implot.h"
