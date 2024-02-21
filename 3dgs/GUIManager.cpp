@@ -21,7 +21,7 @@ void GUIManager::buildGui() {
 
     static ImPlotAxisFlags flags = ImPlotAxisFlags_AutoFit;
     if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1, -1))) {
-        ImPlot::SetupAxes("ms", "time", flags, flags);
+        ImPlot::SetupAxes("s", "time (ms)", flags, flags);
         const auto t = ImGui::GetTime();
         ImPlot::SetupAxisLimits(ImAxis_X1, t - history, t, ImGuiCond_Always);
         ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1);
@@ -42,7 +42,6 @@ void GUIManager::buildGui() {
     ImGui::Text("WASD: Move");
     ImGui::Text("Mouse: Look");
     ImGui::End();
-
 }
 
 void GUIManager::pushMetric(const std::string& name, float value) {
@@ -50,10 +49,10 @@ void GUIManager::pushMetric(const std::string& name, float value) {
     if (!metricsMap->contains(name)) {
         metricsMap->insert({name, ScrollingBuffer(maxSize)});
     }
-    metricsMap->at(name).addPoint(ImGui::GetTime(), value / 1000000.0);
+    metricsMap->at(name).addPoint(ImGui::GetTime(), value);
 }
 
-void GUIManager::pushMetric(const std::unordered_map<std::string, unsigned long long>& name) {
+void GUIManager::pushMetric(const std::unordered_map<std::string, float>& name) {
     for (auto& [n, v]: name) {
         pushMetric(n, v);
     }

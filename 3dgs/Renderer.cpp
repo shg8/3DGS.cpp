@@ -70,7 +70,10 @@ void Renderer::retrieveTimestamps() {
         throw std::runtime_error("Failed to retrieve timestamps");
     }
 
-    guiManager.pushMetric(queryManager->parseResults(timestamps));
+    auto metrics = queryManager->parseResults(timestamps);
+    for (auto& metric: metrics) {
+        guiManager.pushMetric(metric.first, metric.second / 1000000.0);
+    }
 }
 
 void Renderer::initializeVulkan() {
@@ -392,6 +395,8 @@ void Renderer::run() {
         //     assert(data2[i] <= data2[i+1]);
         // }
     }
+
+    context->device->waitIdle();
 }
 
 void Renderer::createCommandPool() {

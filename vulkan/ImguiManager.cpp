@@ -169,3 +169,11 @@ void ImguiManager::draw(vk::CommandBuffer commandBuffer, uint32_t currentImageIn
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
     commandBuffer.endRenderingKHR();
 }
+
+ImguiManager::~ImguiManager() {
+    // Cleanup
+    context->device->waitIdle();
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}

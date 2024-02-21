@@ -112,7 +112,7 @@ public:
 
     static void pushMetric(const std::string& name, float value);
 
-    static void pushMetric(const std::unordered_map<std::string, unsigned long long>& name);
+    static void pushMetric(const std::unordered_map<std::string, float>& name);
 
 };
 

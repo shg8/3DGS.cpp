@@ -22,6 +22,8 @@ public:
 
     void draw(vk::CommandBuffer commandBuffer, uint32_t currentImageIndex, std::function<void(void)> imguiFunction);
 
+    ~ImguiManager();
+
 private:
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<Swapchain> swapchain;
