@@ -1,6 +1,8 @@
 #ifndef IMGUIMANAGER_H
 #define IMGUIMANAGER_H
 
+#include <functional>
+
 #include "VulkanContext.h"
 #include "Swapchain.h"
 #include "Window.h"
