@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
     renderer.run();
 #ifndef DEBUG
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
+        std::cout << e.what() << std::endl;
+        return 0;
     }
 #endif
     return 0;
