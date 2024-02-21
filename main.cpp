@@ -3,13 +3,17 @@
 
 #include "3dgs/Renderer.h"
 #include "args.hxx"
+#include "spdlog/spdlog.h"
 
 int main(int argc, char** argv) {
+    spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");
+
     args::ArgumentParser parser("Vulkan Splatting");
     args::HelpFlag helpFlag{parser, "help", "Display this help menu", {'h', "help"}};
     args::Flag validationLayersFlag{
-        parser, "validation-layers", "Enable Vulkan validation layers", {'v', "validation-layers"}
+        parser, "validation-layers", "Enable Vulkan validation layers", {"validation"}
     };
+    args::Flag verboseFlag{parser, "verbose", "Enable verbose logging", {'v', "verbose"}};
     args::ValueFlag<uint8_t> physicalDeviceIdFlag{
         parser, "physical-device", "Select physical device by index", {'d', "device"}
     };
@@ -31,14 +35,8 @@ int main(int argc, char** argv) {
         return 0;
     }
     catch (const args::ParseError& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << parser;
-        return 1;
-    }
-
-    if (!scenePath) {
-        std::cerr << "Scene path is required" << std::endl;
-        std::cerr << parser;
+        std::cout << e.what() << std::endl;
+        std::cout << parser;
         return 1;
     }
 
@@ -48,6 +46,10 @@ int main(int argc, char** argv) {
     auto immediateSwapchain = pre.register_variable<bool>("IMMEDIATE_SWAPCHAIN");
     auto envVars = pre.parse_and_validate();
 
+    if (args::get(verboseFlag)) {
+        spdlog::set_level(spdlog::level::debug);
+    }
+
     RendererConfiguration config{
         envVars.get_or(validationLayers, false),
         envVars.get(physicalDeviceId).has_value()
@@ -56,6 +58,12 @@ int main(int argc, char** argv) {
         envVars.get_or(immediateSwapchain, false),
         args::get(scenePath)
     };
+
+    // check that the scene file exists
+    if (!std::filesystem::exists(config.scene)) {
+        spdlog::critical("File does not exist: {}", config.scene);
+        return 0;
+    }
 
     if (validationLayersFlag) {
         config.enableVulkanValidationLayers = args::get(validationLayersFlag);
@@ -81,6 +89,7 @@ int main(int argc, char** argv) {
     renderer.run();
 #ifndef DEBUG
     } catch (const std::exception& e) {
+        spdlog::critical(e.what());
         std::cout << e.what() << std::endl;
         return 0;
     }

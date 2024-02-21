@@ -10,6 +10,7 @@
 #include "../vulkan/Utils.h"
 #include "../vulkan/DescriptorSet.h"
 #include "../vulkan/pipelines/ComputePipeline.h"
+#include "spdlog/spdlog.h"
 
 struct VertexStorage {
     glm::vec3 position;
@@ -58,9 +59,8 @@ void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
     vertexBuffer->uploadFrom(vertexStagingBuffer);
 
     auto endTime = std::chrono::high_resolution_clock::now();
-    std::cout << "Loaded " << filename << " in "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count() << "ms"
-            << std::endl;
+    spdlog::info("Loaded {} in {}ms", filename,
+                 std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count());
 
     precomputeCov3D(context);
 }
@@ -176,5 +176,5 @@ void GSScene::precomputeCov3D(const std::shared_ptr<VulkanContext>&context) {
     commandBuffer->dispatch(numGroups, 1, 1);
     context->endOneTimeCommandBuffer(std::move(commandBuffer), VulkanContext::Queue::COMPUTE);
 
-    std::cout << "Precomputed Cov3D" << std::endl;
+    spdlog::info("Precomputed Cov3D");
 }

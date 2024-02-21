@@ -103,7 +103,6 @@ void Buffer::downloadTo(std::shared_ptr<Buffer> buffer, vk::DeviceSize srcOffset
 
 Buffer::~Buffer() {
     vmaDestroyBuffer(context->allocator, buffer, allocation);
-    std::cout << "Destroyed buffer" << std::endl;
 }
 
 std::shared_ptr<Buffer> Buffer::uniform(std::shared_ptr<VulkanContext> context, uint32_t size, bool concurrentSharing) {
