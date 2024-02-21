@@ -4,23 +4,13 @@
 #include <unordered_map>
 
 #include "Utils.h"
+#include <spdlog/spdlog.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                        VkDebugUtilsMessageTypeFlagsEXT messageType,
                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-    const char* severity = "???";
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-        severity = "VERBOSE";
-    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-        severity = "INFO";
-    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        severity = "WARNING";
-    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-        severity = "ERROR";
-    }
-
     const char* type = "???";
     if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
         type = "GENERAL";
@@ -30,7 +20,16 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         type = "PERFORMANCE";
     }
 
-    std::cerr << "[" << severity << "][" << type << "]: " << pCallbackData->pMessage << std::endl;
+    const char* severity = "???";
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        spdlog::debug("[{}]: {}",  type, pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        spdlog::info("[{}]: {}", type, pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        spdlog::warn("[{}]: {}", type, pCallbackData->pMessage);
+    } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        spdlog::critical("[{}]: {}", type, pCallbackData->pMessage);
+    }
 
     return VK_FALSE;
 }
@@ -92,6 +91,7 @@ void VulkanContext::createInstance() {
 
     instance = vk::createInstanceUnique(createInfoChain.get<vk::InstanceCreateInfo>());
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
+    spdlog::debug("Vulkan instance created");
 }
 
 bool VulkanContext::isDeviceSuitable(vk::PhysicalDevice device, std::optional<vk::SurfaceKHR> surface) {
@@ -128,9 +128,11 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
     }
     auto devices = instance->enumeratePhysicalDevices();
 
+
+    spdlog::info("Available physical devices:");
     int ind = 0;
     for (auto& device: devices) {
-        std::cout << "[" << ind++ << "] " << device.getProperties().deviceName << std::endl;
+        spdlog::info("[{}] {}", ind++, device.getProperties().deviceName);
     }
 
     if (id.has_value()) {
@@ -138,7 +140,7 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
             throw std::runtime_error("Invalid physical device id");
         }
         physicalDevice = devices[id.value()];
-        std::cout << "Selected physical device (by index): " << physicalDevice.getProperties().deviceName << std::endl;
+        spdlog::info("Selected physical device (by index): {}", physicalDevice.getProperties().deviceName);
         return;
     }
 
@@ -162,7 +164,7 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
         }
     }
 
-    std::cout << "Selected physical device (automatically): " << physicalDevice.getProperties().deviceName << std::endl;
+    spdlog::info("Selected physical device (automatically): {}", physicalDevice.getProperties().deviceName);
 }
 
 VulkanContext::QueueFamilyIndices VulkanContext::findQueueFamilies() {
@@ -248,6 +250,8 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
             queues[type] = Queue{types, unique_queue_family, 0, queue};
         }
     }
+
+    spdlog::debug("Logical device created");
 
     // Create VMA
     setupVma();

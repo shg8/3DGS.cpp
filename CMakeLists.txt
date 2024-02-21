@@ -50,6 +50,12 @@ FetchContent_Declare(libenvpp
 )
 FetchContent_MakeAvailable(libenvpp)
 
+FetchContent_Declare(spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.13.0
+)
+FetchContent_MakeAvailable(spdlog)
+
 FetchContent_Declare(imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
         GIT_TAG v1.90.3
@@ -145,6 +151,7 @@ target_include_directories(vulkan_splatting PUBLIC
         ${glm_SOURCE_DIR}
         ${imgui_SOURCE_DIR}
         ${imgui_SOURCE_DIR}/backends
+        ${spdlog_SOURCE_DIR}/include
 )
 
 target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)

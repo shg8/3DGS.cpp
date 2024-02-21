@@ -13,6 +13,8 @@
 
 #include "../vulkan/Utils.h"
 
+#include <spdlog/spdlog.h>
+
 #define SORT_ALLOCATE_MULTIPLIER 10
 
 void Renderer::initialize() {
@@ -77,7 +79,8 @@ void Renderer::retrieveTimestamps() {
 }
 
 void Renderer::initializeVulkan() {
-    window = std::make_shared<Window>("Vulkan Splatting", 1920, 1080);
+    spdlog::debug("Initializing Vulkan");
+    window = std::make_shared<Window>("Vulkan Splatting", 800, 600);
     context = std::make_shared<VulkanContext>(Window::getRequiredInstanceExtensions(), std::vector<std::string>{},
                                               configuration.enableVulkanValidationLayers);
 
@@ -112,6 +115,7 @@ void Renderer::initializeVulkan() {
 }
 
 void Renderer::loadSceneToGPU() {
+    spdlog::debug("Loading scene to GPU");
     scene = std::make_shared<GSScene>(configuration.scene);
     scene->load(context);
 
@@ -120,6 +124,7 @@ void Renderer::loadSceneToGPU() {
 }
 
 void Renderer::createPreprocessPipeline() {
+    spdlog::debug("Creating preprocess pipeline");
     uniformBuffer = Buffer::uniform(context, sizeof(UniformBuffer));
     vertexAttributeBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(VertexAttributeBuffer), false);
     tileOverlapBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t), false);
@@ -153,6 +158,7 @@ Renderer::Renderer(RendererConfiguration configuration) : configuration(std::mov
 }
 
 void Renderer::createGui() {
+    spdlog::debug("Creating GUI");
     if (!configuration.enableGui) {
         return;
     }
@@ -163,6 +169,7 @@ void Renderer::createGui() {
 }
 
 void Renderer::createPrefixSumPipeline() {
+    spdlog::debug("Creating prefix sum pipeline");
     prefixSumPingBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t), false);
     prefixSumPongBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t), false);
     totalSumBufferHost = Buffer::staging(context, sizeof(uint32_t));
@@ -181,6 +188,7 @@ void Renderer::createPrefixSumPipeline() {
 }
 
 void Renderer::createRadixSortPipeline() {
+    spdlog::debug("Creating radix sort pipeline");
     sortKBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * SORT_ALLOCATE_MULTIPLIER,
                                       false);
     sortKBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * SORT_ALLOCATE_MULTIPLIER,
@@ -239,6 +247,7 @@ void Renderer::createRadixSortPipeline() {
 }
 
 void Renderer::createPreprocessSortPipeline() {
+    spdlog::debug("Creating preprocess sort pipeline");
     preprocessSortPipeline = std::make_shared<ComputePipeline>(context, "preprocess_sort");
     auto descriptorSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     descriptorSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
@@ -259,6 +268,7 @@ void Renderer::createPreprocessSortPipeline() {
 }
 
 void Renderer::createTileBoundaryPipeline() {
+    spdlog::debug("Creating tile boundary pipeline");
     auto [width, height] = window->getFramebufferSize();
     auto tileX = (width + 16 - 1) / 16;
     auto tileY = (height + 16 - 1) / 16;
@@ -280,6 +290,7 @@ void Renderer::createTileBoundaryPipeline() {
 }
 
 void Renderer::createRenderPipeline() {
+    spdlog::debug("Creating render pipeline");
     renderPipeline = std::make_shared<ComputePipeline>(context, "render");
     auto inputSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     inputSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
@@ -366,7 +377,7 @@ void Renderer::run() {
         auto now = std::chrono::high_resolution_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFpsTime).count();
         if (diff > 1000) {
-            std::cout << "FPS: " << fpsCounter << std::endl;
+            spdlog::debug("FPS: {}", fpsCounter);
             fpsCounter = 0;
             lastFpsTime = now;
         } else {
@@ -400,6 +411,7 @@ void Renderer::run() {
 }
 
 void Renderer::createCommandPool() {
+    spdlog::debug("Creating command pool");
     vk::CommandPoolCreateInfo poolInfo = {};
     poolInfo.queueFamilyIndex = context->queues[VulkanContext::Queue::COMPUTE].queueFamily;
     poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
@@ -408,6 +420,7 @@ void Renderer::createCommandPool() {
 }
 
 void Renderer::recordPreprocessCommandBuffer() {
+    spdlog::debug("Recording preprocess command buffer");
     vk::CommandBufferAllocateInfo allocateInfo = {commandPool.get(), vk::CommandBufferLevel::ePrimary, 1};
     auto buffers = context->device->allocateCommandBuffersUnique(allocateInfo);
     preprocessCommandBuffer = std::move(buffers[0]);
