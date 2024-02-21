@@ -5,14 +5,15 @@
 
 
 #include "Pipeline.h"
+#include <memory>
 
 class ComputePipeline : public Pipeline {
 public:
-    explicit ComputePipeline(const std::shared_ptr<VulkanContext> &context, const std::string& shader);
+    explicit ComputePipeline(const std::shared_ptr<VulkanContext> &context, std::shared_ptr<Shader> shader);;
 
     void build() override;
 private:
-    Shader shader;
+    std::shared_ptr<Shader> shader;
 };
 
 

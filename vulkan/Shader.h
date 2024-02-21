@@ -9,17 +9,33 @@
 
 class Shader {
 public:
-    Shader(const std::shared_ptr<VulkanContext>& _context, std::string  name)
+    Shader(const std::shared_ptr<VulkanContext>& _context, std::string filename)
         : context(_context),
-          name(std::move(name)) {
+          filename(std::move(filename)) {
+    }
+
+    Shader(const std::shared_ptr<VulkanContext>& _context, unsigned char *data, size_t size)
+        : context(_context),
+          filename(""),
+          data(data),
+          size(size) {
+    }
+
+    Shader(const std::shared_ptr<VulkanContext>& context, const std::string& filename, unsigned char* data, size_t size)
+        : filename(filename),
+          context(context),
+          data(data),
+          size(size) {
     }
 
     void load();
 
     vk::UniqueShaderModule shader;
 private:
-    const std::string name;
+    const std::string filename;
     std::shared_ptr<VulkanContext> context;
+    unsigned char* data;
+    size_t size;
 };
 
 
