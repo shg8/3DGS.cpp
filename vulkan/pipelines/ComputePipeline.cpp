@@ -3,7 +3,7 @@
 #include "ComputePipeline.h"
 
 ComputePipeline::ComputePipeline(const std::shared_ptr<VulkanContext>& context, std::shared_ptr<Shader> shader): Pipeline(context), shader(std::move(shader)) {
-    shader->load();
+    this->shader->load();
 }
 
 void ComputePipeline::build() {

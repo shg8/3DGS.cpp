@@ -89,8 +89,17 @@ if (APPLE)
     list(APPEND GLSLC_DEFINE "-DAPPLE")
 endif ()
 
+add_executable(embedfile cmake/embedfile.c)
+
 set(SHADER_HEADER "${PROJECT_BINARY_DIR}/shaders/shaders.h")
 message(STATUS "Shader header file: ${SHADER_HEADER}")
+
+# Delete old header file
+add_custom_command(
+        OUTPUT ${SHADER_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E remove ${SHADER_HEADER}
+        DEPENDS ${GLSL_SOURCE_FILES}
+)
 
 foreach (GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME_WE)
@@ -106,18 +115,13 @@ foreach (GLSL ${GLSL_SOURCE_FILES})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 
     add_custom_command(
-            OUTPUT ${TEMP_HEADER}
-            COMMAND xxd -i -n ${FILE_NAME_UPPER} ${SPIRV} > ${TEMP_HEADER}
-            DEPENDS ${SPIRV})
+            OUTPUT ${SHADER_HEADER}
+            COMMAND embedfile ${FILE_NAME_UPPER} ${SPIRV} ${SHADER_HEADER}
+            DEPENDS ${SPIRV}
+            APPEND)
 
     list(APPEND TEMP_HEADERS ${TEMP_HEADER})
 endforeach (GLSL)
-
-add_custom_command(
-        OUTPUT ${SHADER_HEADER}
-        COMMAND cat ${TEMP_HEADERS} > ${SHADER_HEADER}
-        DEPENDS ${TEMP_HEADERS}
-)
 
 add_custom_target(
         Shaders

@@ -14,14 +14,14 @@ public:
           filename(std::move(filename)) {
     }
 
-    Shader(const std::shared_ptr<VulkanContext>& _context, unsigned char *data, size_t size)
+    Shader(const std::shared_ptr<VulkanContext>& _context, const unsigned char * data, size_t size)
         : context(_context),
           filename(""),
           data(data),
           size(size) {
     }
 
-    Shader(const std::shared_ptr<VulkanContext>& context, const std::string& filename, unsigned char* data, size_t size)
+    Shader(const std::shared_ptr<VulkanContext>& context, const std::string& filename, const unsigned char * data, size_t size)
         : filename(filename),
           context(context),
           data(data),
@@ -34,7 +34,7 @@ public:
 private:
     const std::string filename;
     std::shared_ptr<VulkanContext> context;
-    unsigned char* data;
+    const unsigned char* data = nullptr;
     size_t size;
 };
 
