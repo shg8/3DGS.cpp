@@ -13,6 +13,7 @@ The goal of this project is to provide a go-to implementation for high performan
 - [ ] Use Vulkan subgroups to batch Gaussian retrievals at the warp level
 - [ ] OpenXR support
 - [ ] Apps for iOS and visionOS
+- [ ] App for Android and Qualcomm Spaces
 - [ ] Training
 
 ## Command Line Usage
