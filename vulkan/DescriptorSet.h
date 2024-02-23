@@ -9,7 +9,9 @@
 
 #include "Swapchain.h"
 
-class DescriptorSet {
+class Buffer;
+
+class DescriptorSet : public std::enable_shared_from_this<DescriptorSet> {
 public:
     struct DescriptorBinding {
         vk::DescriptorType type;
@@ -36,12 +38,13 @@ public:
 
     vk::UniqueDescriptorSetLayout descriptorSetLayout;
 
+    std::vector<vk::UniqueDescriptorSet> descriptorSets;
+    size_t maxOptions = 1;
+
 private:
     const std::shared_ptr<VulkanContext> context;
     const uint8_t framesInFlight;
     std::unordered_map<uint32_t, std::vector<DescriptorBinding>> bindings;
-    std::vector<vk::UniqueDescriptorSet> descriptorSets;
-    size_t maxOptions = 1;
 };
 
 

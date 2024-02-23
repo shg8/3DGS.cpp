@@ -137,6 +137,8 @@ private:
     int fpsCounter = 0;
     std::chrono::high_resolution_clock::time_point lastFpsTime = std::chrono::high_resolution_clock::now();
 
+    unsigned int sortBufferSizeMultiplier = 3;
+
     void initializeVulkan();
 
     void loadSceneToGPU();
@@ -155,7 +157,7 @@ private:
 
     void recordPreprocessCommandBuffer();
 
-    void recordRenderCommandBuffer(uint32_t currentFrame);
+    bool recordRenderCommandBuffer(uint32_t currentFrame);
 
     void createCommandPool();
 
