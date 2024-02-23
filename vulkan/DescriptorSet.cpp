@@ -45,6 +45,7 @@ void DescriptorSet::build() {
             for (auto j = 0; j < maxOptions; j++) {
                 if (binding.second.size() == 1) {
                     if (binding.second[0].buffer != nullptr) {
+                        binding.second[0].buffer->boundToDescriptorSet(static_cast<std::weak_ptr<DescriptorSet>>(shared_from_this()), i * maxOptions + j, binding.first, binding.second[0].type);
                         writeDescriptorSets.emplace_back(descriptorSets[i * maxOptions + j].get(), binding.first, 0, 1,
                                                      binding.second[0].type, nullptr,
                                                      &binding.second[0].bufferInfo);
@@ -56,6 +57,7 @@ void DescriptorSet::build() {
                 }
                 else {
                     if (binding.second.at(j).buffer != nullptr) {
+                        binding.second.at(j).buffer->boundToDescriptorSet(static_cast<std::weak_ptr<DescriptorSet>>(shared_from_this()), i * maxOptions + j, binding.first, binding.second.at(j).type);
                         writeDescriptorSets.emplace_back(descriptorSets[i * maxOptions + j].get(), binding.first, 0, 1,
                                                          binding.second.at(j).type, nullptr,
                                                          &binding.second.at(j).bufferInfo);

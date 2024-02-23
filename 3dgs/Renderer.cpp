@@ -15,8 +15,6 @@
 
 #include <spdlog/spdlog.h>
 
-#define SORT_ALLOCATE_MULTIPLIER 10
-
 void Renderer::initialize() {
     initializeVulkan();
     createGui();
@@ -189,17 +187,17 @@ void Renderer::createPrefixSumPipeline() {
 
 void Renderer::createRadixSortPipeline() {
     spdlog::debug("Creating radix sort pipeline");
-    sortKBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * SORT_ALLOCATE_MULTIPLIER,
+    sortKBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier,
                                       false);
-    sortKBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * SORT_ALLOCATE_MULTIPLIER,
+    sortKBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier,
                                      false);
-    sortVBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t) * SORT_ALLOCATE_MULTIPLIER,
+    sortVBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier,
                                       false);
-    sortVBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t) * SORT_ALLOCATE_MULTIPLIER,
+    sortVBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier,
                                      false);
 
-    uint32_t globalInvocationSize = scene->getNumVertices() * SORT_ALLOCATE_MULTIPLIER / numRadixSortBlocksPerWorkgroup;
-    uint32_t remainder = scene->getNumVertices() * SORT_ALLOCATE_MULTIPLIER % numRadixSortBlocksPerWorkgroup;
+    uint32_t globalInvocationSize = scene->getNumVertices() * sortBufferSizeMultiplier / numRadixSortBlocksPerWorkgroup;
+    uint32_t remainder = scene->getNumVertices() * sortBufferSizeMultiplier % numRadixSortBlocksPerWorkgroup;
     globalInvocationSize += remainder > 0 ? 1 : 0;
 
     auto numWorkgroups = (globalInvocationSize + 256 - 1) / 256;
@@ -338,6 +336,7 @@ void Renderer::run() {
             throw std::runtime_error("Failed to acquire swapchain image");
         }
 
+        startOfRenderLoop:
         handleInput();
 
         updateUniforms();
@@ -351,7 +350,9 @@ void Renderer::run() {
         }
         context->device->resetFences(inflightFences[0].get());
 
-        recordRenderCommandBuffer(0);
+        if (!recordRenderCommandBuffer(0)) {
+            goto startOfRenderLoop;
+        }
         vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eComputeShader;
         submitInfo = vk::SubmitInfo {}.setWaitSemaphores(swapchain->imageAvailableSemaphores[0].get())
             .setCommandBuffers(renderCommandBuffer.get())
@@ -421,9 +422,12 @@ void Renderer::createCommandPool() {
 
 void Renderer::recordPreprocessCommandBuffer() {
     spdlog::debug("Recording preprocess command buffer");
-    vk::CommandBufferAllocateInfo allocateInfo = {commandPool.get(), vk::CommandBufferLevel::ePrimary, 1};
-    auto buffers = context->device->allocateCommandBuffersUnique(allocateInfo);
-    preprocessCommandBuffer = std::move(buffers[0]);
+    if (!preprocessCommandBuffer) {
+        vk::CommandBufferAllocateInfo allocateInfo = {commandPool.get(), vk::CommandBufferLevel::ePrimary, 1};
+        auto buffers = context->device->allocateCommandBuffersUnique(allocateInfo);
+        preprocessCommandBuffer = std::move(buffers[0]);
+    }
+    preprocessCommandBuffer->reset();
 
     auto numGroups = (scene->getNumVertices() + 255) / 256;
 
@@ -492,20 +496,42 @@ void Renderer::recordPreprocessCommandBuffer() {
 }
 
 
-void Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
+bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     if (!renderCommandBuffer) {
         renderCommandBuffer = std::move(context->device->allocateCommandBuffersUnique(
             vk::CommandBufferAllocateInfo(commandPool.get(), vk::CommandBufferLevel::ePrimary, 1))[0]);
     }
+
+    uint32_t numInstances = totalSumBufferHost->readOne<uint32_t>();
+    if (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {
+        auto old = sortBufferSizeMultiplier;
+        while (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {
+            sortBufferSizeMultiplier++;
+        }
+        spdlog::info("Reallocating sort buffers. {} -> {}", old, sortBufferSizeMultiplier);
+        sortKBufferEven->realloc(scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier);
+        sortKBufferOdd->realloc(scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier);
+        sortVBufferEven->realloc(scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier);
+        sortVBufferOdd->realloc(scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier);
+
+        uint32_t globalInvocationSize = scene->getNumVertices() * sortBufferSizeMultiplier / numRadixSortBlocksPerWorkgroup;
+        uint32_t remainder = scene->getNumVertices() * sortBufferSizeMultiplier % numRadixSortBlocksPerWorkgroup;
+        globalInvocationSize += remainder > 0 ? 1 : 0;
+
+        auto numWorkgroups = (globalInvocationSize + 256 - 1) / 256;
+
+        sortHistBuffer->realloc(numWorkgroups * 256 * sizeof(uint32_t));
+
+        recordPreprocessCommandBuffer();
+        return false;
+    }
+
     renderCommandBuffer->reset({});
     renderCommandBuffer->begin(vk::CommandBufferBeginInfo{});
 
-    uint32_t numInstances = totalSumBufferHost->readOne<uint32_t>();
     // std::cout << "Num instances: " << numInstances << std::endl;
-    if (numInstances > scene->getNumVertices() * SORT_ALLOCATE_MULTIPLIER) {
-        throw std::runtime_error("Gaussian instantiation out of memory");
-    }
-    assert(numInstances <= scene->getNumVertices() * SORT_ALLOCATE_MULTIPLIER);
+
+    assert(numInstances <= scene->getNumVertices() * sortBufferSizeMultiplier);
     for (auto i = 0; i < 8; i++) {
         sortHistPipeline->bind(renderCommandBuffer, 0, i % 2 == 0 ? 0 : 1);
         if (i == 0) {
@@ -625,6 +651,8 @@ void Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
                                          vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
     }
     renderCommandBuffer->end();
+
+    return true;
 }
 
 void Renderer::updateUniforms() {

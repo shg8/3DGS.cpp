@@ -3,8 +3,12 @@
 
 #include <cstdint>
 #include <memory>
+
+#include "DescriptorSet.h"
 #include "VulkanContext.h"
 #include "vk_mem_alloc.h"
+
+class DescriptorSet;
 
 class Buffer : public std::enable_shared_from_this<Buffer> {
 public:
@@ -20,6 +24,10 @@ public:
     Buffer &operator=(Buffer &&) = delete;
 
     ~Buffer();
+
+    void realloc(uint64_t uint64);
+
+    void boundToDescriptorSet(std::weak_ptr<DescriptorSet> descriptorSet, uint32_t set, uint32_t binding, vk::DescriptorType type);
 
     static std::shared_ptr<Buffer> uniform(std::shared_ptr<VulkanContext> context, uint32_t size, bool concurrentSharing = false);
 
@@ -56,6 +64,9 @@ public:
 
     vk::DeviceSize size;
     vk::BufferUsageFlags usage;
+    uint64_t alignment;
+    bool shared;
+
     vk::Buffer buffer;
     VmaAllocation allocation;
     VmaAllocationInfo allocation_info;
@@ -65,8 +76,12 @@ public:
 
 
 private:
+    void alloc();
+
     Buffer createStagingBuffer(uint32_t size);
     std::shared_ptr<VulkanContext> context;
+
+    std::vector<std::tuple<std::weak_ptr<DescriptorSet>, uint32_t, uint32_t, vk::DescriptorType>> boundDescriptorSets;
 };
 
 
