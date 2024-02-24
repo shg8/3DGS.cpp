@@ -33,39 +33,60 @@ void Renderer::handleInput() {
     auto translation = window->getCursorTranslation();
     auto keys = window->getKeys(); // W, A, S, D
 
-    // rotate camera
-    if (translation[0] != 0.0 || translation[1] != 0.0) {
-        camera.rotation = glm::rotate(camera.rotation, static_cast<float>(translation[0]) * 0.005f,
-                                      glm::vec3(0.0f, -1.0f, 0.0f));
-        camera.rotation = glm::rotate(camera.rotation, static_cast<float>(translation[1]) * 0.005f,
-                                      glm::vec3(-1.0f, 0.0f, 0.0f));
+    if (!guiManager.wantCaptureMouse() && !guiManager.mouseCapture && window->getMouseButton()[0]) {
+        window->mouseCapture(true);
+        guiManager.mouseCapture = true;
     }
 
+    // rotate camera
+    if (guiManager.mouseCapture) {
+        if (translation[0] != 0.0 || translation[1] != 0.0) {
+            camera.rotation = glm::rotate(camera.rotation, static_cast<float>(translation[0]) * 0.005f,
+                                          glm::vec3(0.0f, -1.0f, 0.0f));
+            camera.rotation = glm::rotate(camera.rotation, static_cast<float>(translation[1]) * 0.005f,
+                                          glm::vec3(-1.0f, 0.0f, 0.0f));
+        }
+    }
+
+
     // move camera
-    glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
-    if (keys[0]) {
-        direction += glm::vec3(0.0f, 0.0f, -1.0f);
-    }
-    if (keys[1]) {
-        direction += glm::vec3(-1.0f, 0.0f, 0.0f);
-    }
-    if (keys[2]) {
-        direction += glm::vec3(0.0f, 0.0f, 1.0f);
-    }
-    if (keys[3]) {
-        direction += glm::vec3(1.0f, 0.0f, 0.0f);
-    }
-    if (direction != glm::vec3(0.0f, 0.0f, 0.0f)) {
-        direction = glm::normalize(direction);
-        camera.position += (glm::mat4_cast(camera.rotation) * glm::vec4(direction, 1.0f)).xyz() * 0.3f;
+    if (!guiManager.wantCaptureKeyboard()) {
+        glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
+        if (keys[0]) {
+            direction += glm::vec3(0.0f, 0.0f, -1.0f);
+        }
+        if (keys[1]) {
+            direction += glm::vec3(-1.0f, 0.0f, 0.0f);
+        }
+        if (keys[2]) {
+            direction += glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+        if (keys[3]) {
+            direction += glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        if (keys[4]) {
+            direction += glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+        if (keys[5]) {
+            direction += glm::vec3(0.0f, -1.0f, 0.0f);
+        }
+        if (keys[6]) {
+            window->mouseCapture(false);
+            guiManager.mouseCapture = false;
+        }
+        if (direction != glm::vec3(0.0f, 0.0f, 0.0f)) {
+            direction = glm::normalize(direction);
+            camera.position += (glm::mat4_cast(camera.rotation) * glm::vec4(direction, 1.0f)).xyz() * 0.3f;
+        }
     }
 }
 
 void Renderer::retrieveTimestamps() {
     std::vector<uint64_t> timestamps(queryManager->nextId);
     auto res = context->device->getQueryPoolResults(context->queryPool.get(), 0, queryManager->nextId,
-                                         timestamps.size() * sizeof(uint64_t),
-                                         timestamps.data(), sizeof(uint64_t), vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+                                                    timestamps.size() * sizeof(uint64_t),
+                                                    timestamps.data(), sizeof(uint64_t),
+                                                    vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
     if (res != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to retrieve timestamps");
     }
@@ -302,7 +323,7 @@ void Renderer::createRenderPipeline() {
     inputSet->build();
 
     auto outputSet = std::make_shared<DescriptorSet>(context, 1);
-    for (auto&image: swapchain->swapchainImages) {
+    for (auto& image: swapchain->swapchainImages) {
         outputSet->bindImageToDescriptorSet(0, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute,
                                             image);
     }
@@ -331,8 +352,7 @@ void Renderer::run() {
         if (res == vk::Result::eErrorOutOfDateKHR) {
             swapchain->recreate();
             continue;
-        }
-        else if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
+        } else if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
             throw std::runtime_error("Failed to acquire swapchain image");
         }
 
@@ -341,7 +361,7 @@ void Renderer::run() {
 
         updateUniforms();
 
-        auto submitInfo = vk::SubmitInfo {}.setCommandBuffers(preprocessCommandBuffer.get());
+        auto submitInfo = vk::SubmitInfo{}.setCommandBuffers(preprocessCommandBuffer.get());
         context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
 
         ret = context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
@@ -354,10 +374,10 @@ void Renderer::run() {
             goto startOfRenderLoop;
         }
         vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eComputeShader;
-        submitInfo = vk::SubmitInfo {}.setWaitSemaphores(swapchain->imageAvailableSemaphores[0].get())
-            .setCommandBuffers(renderCommandBuffer.get())
-            .setSignalSemaphores(renderFinishedSemaphores[0].get())
-            .setWaitDstStageMask(waitStage);
+        submitInfo = vk::SubmitInfo{}.setWaitSemaphores(swapchain->imageAvailableSemaphores[0].get())
+                .setCommandBuffers(renderCommandBuffer.get())
+                .setSignalSemaphores(renderFinishedSemaphores[0].get())
+                .setWaitDstStageMask(waitStage);
         context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
 
         vk::PresentInfoKHR presentInfo{};
@@ -370,8 +390,7 @@ void Renderer::run() {
         ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
         if (ret == vk::Result::eErrorOutOfDateKHR || ret == vk::Result::eSuboptimalKHR) {
             swapchain->recreate();
-        }
-        else if (ret != vk::Result::eSuccess) {
+        } else if (ret != vk::Result::eSuccess) {
             throw std::runtime_error("Failed to present swapchain image");
         }
 
@@ -436,7 +455,8 @@ void Renderer::recordPreprocessCommandBuffer() {
     preprocessCommandBuffer->resetQueryPool(context->queryPool.get(), 0, 12);
 
     preprocessPipeline->bind(preprocessCommandBuffer, 0, 0);
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("preprocess_start"));
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("preprocess_start"));
     preprocessCommandBuffer->dispatch(numGroups, 1, 1);
     tileOverlapBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
 
@@ -445,10 +465,12 @@ void Renderer::recordPreprocessCommandBuffer() {
 
     prefixSumPingBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
 
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("preprocess_end"));
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("preprocess_end"));
 
     prefixSumPipeline->bind(preprocessCommandBuffer, 0, 0);
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("prefix_sum_start"));
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("prefix_sum_start"));
     const auto iters = static_cast<uint32_t>(std::ceil(std::log2(static_cast<float>(scene->getNumVertices()))));
     for (uint32_t timestep = 0; timestep <= iters; timestep++) {
         preprocessCommandBuffer->pushConstants(prefixSumPipeline->pipelineLayout.get(),
@@ -459,8 +481,7 @@ void Renderer::recordPreprocessCommandBuffer() {
         if (timestep % 2 == 0) {
             prefixSumPongBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
             prefixSumPingBuffer->computeReadWriteBarrier(preprocessCommandBuffer.get());
-        }
-        else {
+        } else {
             prefixSumPingBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
             prefixSumPongBuffer->computeReadWriteBarrier(preprocessCommandBuffer.get());
         }
@@ -470,18 +491,19 @@ void Renderer::recordPreprocessCommandBuffer() {
     if (iters % 2 == 0) {
         preprocessCommandBuffer->copyBuffer(prefixSumPingBuffer->buffer, totalSumBufferHost->buffer, 1,
                                             &totalSumRegion);
-    }
-    else {
+    } else {
         preprocessCommandBuffer->copyBuffer(prefixSumPongBuffer->buffer, totalSumBufferHost->buffer, 1,
                                             &totalSumRegion);
     }
 
     vertexAttributeBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
 
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("prefix_sum_end"));
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("prefix_sum_end"));
 
     preprocessSortPipeline->bind(preprocessCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("preprocess_sort_start"));
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("preprocess_sort_start"));
     uint32_t tileX = (swapchain->swapchainExtent.width + 16 - 1) / 16;
     // assert(tileX == 50);
     preprocessCommandBuffer->pushConstants(preprocessSortPipeline->pipelineLayout.get(),
@@ -490,7 +512,8 @@ void Renderer::recordPreprocessCommandBuffer() {
     preprocessCommandBuffer->dispatch(numGroups, 1, 1);
 
     sortKBufferEven->computeWriteReadBarrier(preprocessCommandBuffer.get());
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("preprocess_sort_end"));
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("preprocess_sort_end"));
 
     preprocessCommandBuffer->end();
 }
@@ -535,7 +558,8 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     for (auto i = 0; i < 8; i++) {
         sortHistPipeline->bind(renderCommandBuffer, 0, i % 2 == 0 ? 0 : 1);
         if (i == 0) {
-            renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("sort_start"));
+            renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                                queryManager->registerQuery("sort_start"));
         }
         auto invocationSize = (numInstances + numRadixSortBlocksPerWorkgroup - 1) / numRadixSortBlocksPerWorkgroup;
         invocationSize = (invocationSize + 255) / 256;
@@ -562,14 +586,14 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
         if (i % 2 == 0) {
             sortKBufferOdd->computeWriteReadBarrier(renderCommandBuffer.get());
             sortVBufferOdd->computeWriteReadBarrier(renderCommandBuffer.get());
-        }
-        else {
+        } else {
             sortKBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
             sortVBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
         }
 
         if (i == 7) {
-            renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("sort_end"));
+            renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                                queryManager->registerQuery("sort_end"));
         }
     }
 
@@ -583,17 +607,20 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
     // Since we have 64 bit keys, the sort result is always in the even buffer
     tileBoundaryPipeline->bind(renderCommandBuffer, 0, 0);
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("tile_boundary_start"));
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                        queryManager->registerQuery("tile_boundary_start"));
     renderCommandBuffer->pushConstants(tileBoundaryPipeline->pipelineLayout.get(),
                                        vk::ShaderStageFlagBits::eCompute, 0,
                                        sizeof(uint32_t), &numInstances);
     renderCommandBuffer->dispatch((numInstances + 255) / 256, 1, 1);
 
     tileBoundaryBuffer->computeWriteReadBarrier(renderCommandBuffer.get());
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("tile_boundary_end"));
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                        queryManager->registerQuery("tile_boundary_end"));
 
     renderPipeline->bind(renderCommandBuffer, 0, std::vector<uint32_t>{0, currentImageIndex});
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(), queryManager->registerQuery("render_start"));
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                        queryManager->registerQuery("render_start"));
     auto [width, height] = window->getFramebufferSize();
     uint32_t constants[2] = {width, height};
     renderCommandBuffer->pushConstants(renderPipeline->pipelineLayout.get(),
@@ -626,19 +653,20 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
         imageMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
         imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
         renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader,
-                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
+                                             vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                             vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
     } else {
         imageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
         imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
         renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader,
-                                         vk::PipelineStageFlagBits::eBottomOfPipe,
-                                         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
+                                             vk::PipelineStageFlagBits::eBottomOfPipe,
+                                             vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
     }
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(), queryManager->registerQuery("render_end"));
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                        queryManager->registerQuery("render_end"));
 
     if (configuration.enableGui) {
-        imguiManager->draw(renderCommandBuffer.get(), currentImageIndex, &GUIManager::buildGui);
+        imguiManager->draw(renderCommandBuffer.get(), currentImageIndex, std::bind(&GUIManager::buildGui, &guiManager));
 
         imageMemoryBarrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
         imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
@@ -647,8 +675,8 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
         imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
 
         renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                         vk::PipelineStageFlagBits::eBottomOfPipe,
-                                         vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
+                                             vk::PipelineStageFlagBits::eBottomOfPipe,
+                                             vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
     }
     renderCommandBuffer->end();
 
@@ -690,5 +718,4 @@ void Renderer::updateUniforms() {
 }
 
 Renderer::~Renderer() {
-
 }
