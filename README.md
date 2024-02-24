@@ -23,18 +23,16 @@ The goal of this project is to provide a go-to implementation for high performan
 
 ### Options
 
-- `--validation`: Enable Vulkan validation layers. This is useful for debugging and development purposes.
+- `--validation`: Enable Vulkan validation layers
 
-- `-v`, `--verbose`: Enable verbose logging. This will output more detailed logs, which can be helpful for troubleshooting issues.
+- `-v`, `--verbose`: Enable verbose logging
 
-- `-d`, `--device <index>`: Select physical device by index. This allows you to specify which physical device (e.g., GPU) to use for rendering.
+- `-d`, `--device <index>`: Select GPU by index
 
-- `-i`, `--immediate-swapchain`: Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR). This can affect the presentation mode of the swapchain.
+- `-i`, `--immediate-swapchain`: Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)
 
-- `--no-gui`: Disable GUI. This runs the application in a headless mode, without a graphical user interface.
-
-- `scene <path>`: Path to the scene file. This is a positional argument that specifies the path to the .ply file that contains the 3D scene to be rendered.
-
+- `--no-gui`: Disable GUI
+  
 ## Building
 ### Linux
 VulkanSplatting requires the following dependencies:
