@@ -8,7 +8,7 @@ VulkanSplatting is an (not-yet-highly-) optimized, cross-platform implementation
 ## TODO
 The goal of this project is to provide a go-to implementation for high performance rendering of point-based radiance fields that works on all platforms, but we need your help! Please feel free to open an issue if you have any ideas or are interested in contributing.
 
-- [ ] Better controls and GUI on GLFW
+- [x] Better controls and GUI on GLFW
 - [ ] Implement SOTA parallel radix sort for sorting Gaussian instances
 - [ ] Use Vulkan subgroups to batch Gaussian retrievals at the warp level
 - [ ] OpenXR support

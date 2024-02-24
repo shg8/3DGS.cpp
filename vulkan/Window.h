@@ -14,13 +14,17 @@ public:
 
     VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context);
 
+    std::array<bool, 3> getMouseButton();
+
     static std::vector<std::string> getRequiredInstanceExtensions();
 
     std::pair<uint32_t, uint32_t> getFramebufferSize() const;
 
     std::array<double, 2> getCursorTranslation();
 
-    std::array<bool, 4> getKeys();
+    std::array<bool, 7> getKeys();
+
+    void mouseCapture(bool capture);
 
     bool tick();
 

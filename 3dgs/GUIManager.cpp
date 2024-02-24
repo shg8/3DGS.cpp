@@ -13,6 +13,10 @@ void GUIManager::init() {
 }
 
 void GUIManager::buildGui() {
+    if (mouseCapture) {
+        ImGui::BeginDisabled(true);
+    }
+
     ImGui::SetNextWindowSize(ImVec2(400, 250), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
     ImGui::Begin("Performance");
@@ -37,11 +41,22 @@ void GUIManager::buildGui() {
     ImGui::SliderFloat("History", &history, 1, 30, "%.1f s");
     ImGui::End();
 
+    // always auto resize
+
+    bool popen = true;
     ImGui::SetNextWindowPos(ImVec2(10, 270), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Controls");
-    ImGui::Text("WASD: Move");
-    ImGui::Text("Mouse: Look");
+    ImGui::Begin("Controls", &popen, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("WASD: move");
+    ImGui::Text("Space: up");
+    ImGui::Text("Shift: down");
+    ImGui::Text("Left click: capture mouse");
+    ImGui::Text("ESC: release mouse");
+    ImGui::Text("Mouse captured: %s", mouseCapture ? "true" : "false");
     ImGui::End();
+
+    if (mouseCapture) {
+        ImGui::EndDisabled();
+    }
 }
 
 void GUIManager::pushMetric(const std::string& name, float value) {
@@ -56,4 +71,12 @@ void GUIManager::pushMetric(const std::unordered_map<std::string, float>& name) 
     for (auto& [n, v]: name) {
         pushMetric(n, v);
     }
+}
+
+bool GUIManager::wantCaptureMouse() {
+    return ImGui::GetIO().WantCaptureMouse;
+}
+
+bool GUIManager::wantCaptureKeyboard() {
+    return ImGui::GetIO().WantCaptureKeyboard;
 }
