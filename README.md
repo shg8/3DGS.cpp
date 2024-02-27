@@ -5,17 +5,6 @@ VulkanSplatting is an (not-yet-highly-) optimized, cross-platform implementation
 
 ![VulkanSplatting Demo macOS](https://github.com/shg8/VulkanSplatting/assets/38004233/66542056-ce30-4998-a612-dd4f6792599e)
 
-## TODO
-The goal of this project is to provide a go-to implementation for high performance rendering of point-based radiance fields that works on all platforms, but we need your help! Please feel free to open an issue if you have any ideas or are interested in contributing.
-
-- [x] Better controls and GUI on GLFW
-- [ ] Implement SOTA parallel radix sort for sorting Gaussian instances
-- [ ] Use Vulkan subgroups to batch Gaussian retrievals at the warp level
-- [ ] OpenXR support
-- [ ] Apps for iOS and visionOS
-- [ ] App for Android and Qualcomm Spaces
-- [ ] Training
-
 ## Command Line Usage
 ```
 ./vulkan_splatting [options] <input_file.ply>
@@ -52,6 +41,17 @@ cmake -DCMAKE_BUILD_TYPE=Release -DVULKAN_SDK=\INSTALL\LOCATION\OF\YOUR\SDK -S .
 
 ### macOS
 After installing the Vulkan SDK, please proceed with CMake configuration and build steps as usual.
+
+## TODO
+- [x] Better controls and GUI on GLFW
+- [ ] Implement SOTA parallel radix sort
+- [ ] Use Vulkan subgroups to batch Gaussian retrievals at the warp level
+- [ ] OpenXR support
+- [ ] Apps for iOS and visionOS
+- [ ] App for Android and Qualcomm Spaces
+- [ ] Training
+
+Please feel free to open an issue if you have any feature suggestions or are interested in contributing.
 
 ## License
 The project is licensed under LGPL. If that is not permissive enough for your project, please feel free to [send me an email](mailto:me@stevengao.net).
