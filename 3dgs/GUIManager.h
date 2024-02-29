@@ -41,6 +41,8 @@ public:
 
     void buildGui();
 
+    static void pushTextMetric(const std::string& name, float value);
+
     static void pushMetric(const std::string& name, float value);
 
     static void pushMetric(const std::unordered_map<std::string, float>& name);

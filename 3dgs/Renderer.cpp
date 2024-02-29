@@ -526,6 +526,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     }
 
     uint32_t numInstances = totalSumBufferHost->readOne<uint32_t>();
+    guiManager.pushTextMetric("instances", numInstances);
     if (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {
         auto old = sortBufferSizeMultiplier;
         while (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {

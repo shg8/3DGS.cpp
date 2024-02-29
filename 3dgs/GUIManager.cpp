@@ -3,9 +3,11 @@
 #include <iostream>
 
 static std::shared_ptr<std::unordered_map<std::string, ScrollingBuffer>> metricsMap;
+static std::shared_ptr<std::unordered_map<std::string, float>> textMetricsMap;
 
 GUIManager::GUIManager() {
     metricsMap = std::make_shared<std::unordered_map<std::string, ScrollingBuffer>>();
+    textMetricsMap = std::make_shared<std::unordered_map<std::string, float>>();
 }
 
 void GUIManager::init() {
@@ -45,6 +47,13 @@ void GUIManager::buildGui() {
 
     bool popen = true;
     ImGui::SetNextWindowPos(ImVec2(10, 270), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Metrics", &popen, ImGuiWindowFlags_AlwaysAutoResize);
+    for (auto& [name, value]: *textMetricsMap) {
+        ImGui::Text("%s: %.2f", name.c_str(), value);
+    }
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(10, 310), ImGuiCond_FirstUseEver);
     ImGui::Begin("Controls", &popen, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("WASD: move");
     ImGui::Text("Space: up");
@@ -56,6 +65,14 @@ void GUIManager::buildGui() {
 
     if (mouseCapture) {
         ImGui::EndDisabled();
+    }
+}
+
+void GUIManager::pushTextMetric(const std::string& name, float value) {
+    if (!textMetricsMap->contains(name)) {
+        textMetricsMap->insert({name, value});
+    } else {
+        textMetricsMap->at(name) = value;
     }
 }
 
