@@ -1,8 +1,13 @@
 # VulkanSplatting
 
-VulkanSplatting is an (not-yet-highly-) optimized, cross-platform implementation
+VulkanSplatting is an (not-yet-) highly optimized, cross-platform implementation
 of [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) using
 the [Vulkan API](https://www.khronos.org/vulkan/) and compute pipelines.
+
+Why Vulkan? We want to democratize the access to high-performance point-based radiance fields.
+Existing implementations of Gaussian Splatting are often limited to CUDA, which only runs on NVIDIA GPUs, 
+and OpenGL is deprecated on Apple platforms. Additionally, Vulkan's compute capabilities are the closest to CUDA's 
+with support for warp-level primitives (subgroups).
 
 [![Windows + Linux](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml)
 
