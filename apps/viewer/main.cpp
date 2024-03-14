@@ -22,8 +22,8 @@ int main(int argc, char** argv) {
         parser, "immediate-swapchain", "Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)",
         {'i', "immediate-swapchain"}
     };
-    args::ValueFlag<uint32_t> widthFlag{parser, "width", "Set window width", {"width"}};
-    args::ValueFlag<uint32_t> heightFlag{parser, "height", "Set window height", {"height"}};
+    args::ValueFlag<uint32_t> widthFlag{parser, "width", "Set window width", {'w', "width"}};
+    args::ValueFlag<uint32_t> heightFlag{parser, "height", "Set window height", {'h', "height"}};
     args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", { "no-gui"}};
     args::Positional<std::string> scenePath{parser, "scene", "Path to scene file", "scene.ply"};
 
