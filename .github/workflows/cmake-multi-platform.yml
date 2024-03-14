@@ -60,6 +60,16 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
 
+    - name: Set artifact path (Windows)
+      shell: bash
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}\build\apps\viewer\Release\vulkan_splatting_viewer.exe" >> "$GITHUB_ENV"
+      if: runner.os == 'Windows'
+
+    - name: Set artifact path (POSIX)
+      shell: bash
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/vulkan_splatting_viewer" >> "$GITHUB_ENV"
+      if: runner.os != 'Windows'
+
     - name: Install dependencies
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libglm-dev
@@ -90,6 +100,15 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: vulkan_splatting-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}
-        path: |
-          ${{ steps.strings.outputs.build-output-dir }}/apps/viewer/vulkan_splatting_viewer
-          ${{ steps.strings.outputs.build-output-dir }}/apps/viewer/Release/vulkan_splatting_viewer.exe
+        path: ${{ env.ARTIFACT_PATH }}
+    
+    - name: Release nightly
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        prerelease: true
+        name: nightly
+        tag_name: nightly
+        files: ${{ env.ARTIFACT_PATH }}
+        fail_on_unmatched_files: true
+      
