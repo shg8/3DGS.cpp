@@ -54,7 +54,11 @@ FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.13.0
 )
-FetchContent_MakeAvailable(spdlog)
+FetchContent_GetProperties(spdlog)
+if (NOT spdlog_POPULATED)
+    FetchContent_Populate(spdlog)
+    add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
+endif()
 
 FetchContent_Declare(imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -178,7 +182,7 @@ target_include_directories(vulkan_splatting PUBLIC
         ${spdlog_SOURCE_DIR}/include
 )
 
-target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
+target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp spdlog::spdlog)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)
 if (UNIX)
     target_link_libraries(vulkan_splatting PUBLIC ${CMAKE_DL_LIBS})
