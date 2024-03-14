@@ -3,30 +3,18 @@
 
 #define GLM_SWIZZLE
 
-#include <args.hxx>
 #include <atomic>
+#include <VulkanSplatting.h>
 
-#include "../vulkan/Window.h"
+#include "vulkan/Window.h"
 #include "GSScene.h"
-#include "../vulkan/pipelines/ComputePipeline.h"
-#include "../vulkan/Swapchain.h"
+#include "vulkan/pipelines/ComputePipeline.h"
+#include "vulkan/Swapchain.h"
 #include <glm/gtc/quaternion.hpp>
 
 #include "GUIManager.h"
-#include "../vulkan/ImguiManager.h"
-#include "../vulkan/QueryManager.h"
-
-struct RendererConfiguration {
-    bool enableVulkanValidationLayers = false;
-    std::optional<uint8_t> physicalDeviceId = std::nullopt;
-    bool immediateSwapchain = false;
-    std::string scene;
-
-    float fov = 45.0f;
-    float near = 0.2f;
-    float far = 1000.0f;
-    bool enableGui = true;
-};
+#include "vulkan/ImguiManager.h"
+#include "vulkan/QueryManager.h"
 
 class Renderer {
 public:
@@ -64,7 +52,7 @@ public:
         uint32_t g_num_blocks_per_workgroup; // == NUM_BLOCKS_PER_WORKGROUP
     };
 
-    explicit Renderer(RendererConfiguration configuration);
+    explicit Renderer(VulkanSplatting::RendererConfiguration configuration);
 
     void createGui();
 
@@ -78,7 +66,7 @@ public:
 
     ~Renderer();
 private:
-    RendererConfiguration configuration;
+    VulkanSplatting::RendererConfiguration configuration;
     std::shared_ptr<Window> window;
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<ImguiManager> imguiManager;

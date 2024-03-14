@@ -5,8 +5,8 @@
 #include <string>
 #include <memory>
 
-#include "imgui.h"
-#include "implot/implot.h"
+#include "../cmake-build-debug/_deps/imgui-src/imgui.h"
+#include "../third_party/implot/implot.h"
 
 struct ScrollingBuffer {
     int maxSize;

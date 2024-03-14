@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "../vulkan/Swapchain.h"
+#include "vulkan/Swapchain.h"
 
 #include <memory>
 #include <shaders.h>
@@ -12,7 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "../vulkan/Utils.h"
+#include "vulkan/Utils.h"
 
 #include <spdlog/spdlog.h>
 
@@ -100,7 +100,7 @@ void Renderer::retrieveTimestamps() {
 
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
-    window = std::make_shared<Window>("Vulkan Splatting", 1920, 1080);
+    window = std::make_shared<Window>("Vulkan Splatting", configuration.width, configuration.height);
     context = std::make_shared<VulkanContext>(Window::getRequiredInstanceExtensions(), std::vector<std::string>{},
                                               configuration.enableVulkanValidationLayers);
 
@@ -174,7 +174,7 @@ void Renderer::createPreprocessPipeline() {
     preprocessPipeline->build();
 }
 
-Renderer::Renderer(RendererConfiguration configuration) : configuration(std::move(configuration)) {
+Renderer::Renderer(VulkanSplatting::RendererConfiguration configuration) : configuration(std::move(configuration)) {
 }
 
 void Renderer::createGui() {

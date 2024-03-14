@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <iostream>
 #include <glm/glm.hpp>
-#include "../vulkan/VulkanContext.h"
-#include "../vulkan/Buffer.h"
+#include "vulkan/VulkanContext.h"
+#include "vulkan/Buffer.h"
 
 struct PlyProperty {
     std::string type;
