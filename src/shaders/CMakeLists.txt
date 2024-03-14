@@ -4,9 +4,9 @@ project(shaders)
 add_executable(embedfile ${CMAKE_SOURCE_DIR}/cmake/embedfile.c)
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
-        "shaders/*.frag"
-        "shaders/*.vert"
-        "shaders/*.comp"
+        "*.frag"
+        "*.vert"
+        "*.comp"
 )
 
 if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT APPLE)
@@ -20,7 +20,7 @@ if (APPLE)
     list(APPEND GLSLC_DEFINE "-DAPPLE")
 endif ()
 
-set(SHADER_HEADER "${PROJECT_BINARY_DIR}/shaders/shaders.h")
+set(SHADER_HEADER "${CMAKE_BINARY_DIR}/shaders/shaders.h")
 message(STATUS "Shader header file: ${SHADER_HEADER}")
 
 # Delete old header file
@@ -52,4 +52,4 @@ foreach (GLSL ${GLSL_SOURCE_FILES})
     list(APPEND TEMP_HEADERS ${TEMP_HEADER})
 endforeach (GLSL)
 
-add_custom_target(shaders DEPENDS ${SHADER_HEADER})
+add_custom_target(shaders DEPENDS ${SHADER_HEADER} ${SPIRV_BINARY_FILES})
