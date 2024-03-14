@@ -8,10 +8,11 @@
 #include <random>
 #include "shaders.h"
 
-#include "../vulkan/Utils.h"
-#include "../vulkan/DescriptorSet.h"
-#include "../vulkan/pipelines/ComputePipeline.h"
+#include "vulkan/Utils.h"
+#include "vulkan/DescriptorSet.h"
+#include "vulkan/pipelines/ComputePipeline.h"
 #include "spdlog/spdlog.h"
+#include "vulkan/Shader.h"
 
 struct VertexStorage {
     glm::vec3 position;

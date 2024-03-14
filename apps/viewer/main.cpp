@@ -1,7 +1,8 @@
+#include <filesystem>
 #include <iostream>
 #include <libenvpp/env.hpp>
 
-#include "3dgs/Renderer.h"
+#include "VulkanSplatting.h"
 #include "args.hxx"
 #include "spdlog/spdlog.h"
 
@@ -21,6 +22,8 @@ int main(int argc, char** argv) {
         parser, "immediate-swapchain", "Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)",
         {'i', "immediate-swapchain"}
     };
+    args::ValueFlag<uint32_t> widthFlag{parser, "width", "Set window width", {'w', "width"}};
+    args::ValueFlag<uint32_t> heightFlag{parser, "height", "Set window height", {'h', "height"}};
     args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", { "no-gui"}};
     args::Positional<std::string> scenePath{parser, "scene", "Path to scene file", "scene.ply"};
 
@@ -50,7 +53,7 @@ int main(int argc, char** argv) {
         spdlog::set_level(spdlog::level::debug);
     }
 
-    RendererConfiguration config{
+    VulkanSplatting::RendererConfiguration config{
         envVars.get_or(validationLayers, false),
         envVars.get(physicalDeviceId).has_value()
             ? std::make_optional(envVars.get(physicalDeviceId).value())
@@ -81,12 +84,19 @@ int main(int argc, char** argv) {
         config.enableGui = false;
     }
 
+    if (widthFlag) {
+        config.width = args::get(widthFlag);
+    }
+
+    if (heightFlag) {
+        config.height = args::get(heightFlag);
+    }
+
 #ifndef DEBUG
     try {
 #endif
-    auto renderer = Renderer(config);
-    renderer.initialize();
-    renderer.run();
+    auto renderer = VulkanSplatting(config);
+    renderer.start();
 #ifndef DEBUG
     } catch (const std::exception& e) {
         spdlog::critical(e.what());

@@ -1,11 +1,10 @@
-
-
 #ifndef VULKAN_SPLATTING_COMPUTEPIPELINE_H
 #define VULKAN_SPLATTING_COMPUTEPIPELINE_H
 
 
 #include "Pipeline.h"
 #include <memory>
+#include "../Shader.h"
 
 class ComputePipeline : public Pipeline {
 public:

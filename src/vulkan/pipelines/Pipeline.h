@@ -5,9 +5,7 @@
 #include <memory>
 #include <map>
 #include "../VulkanContext.h"
-#include "../Buffer.h"
 #include "../DescriptorSet.h"
-#include "../Shader.h"
 
 class Pipeline {
 public:
