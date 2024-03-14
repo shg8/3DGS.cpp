@@ -92,4 +92,4 @@ jobs:
         name: vulkan_splatting-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/apps/viewer/vulkan_splatting_viewer
-          ${{ steps.strings.outputs.build-output-dir }}/apps/viewer/vulkan_splatting_viewer.exe
+          ${{ steps.strings.outputs.build-output-dir }}/apps/viewer/Release/vulkan_splatting_viewer.exe
