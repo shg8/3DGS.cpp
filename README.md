@@ -4,7 +4,7 @@ VulkanSplatting is an (not-yet-) highly optimized, cross-platform implementation
 of [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) using
 the [Vulkan API](https://www.khronos.org/vulkan/) and compute pipelines.
 
-Why Vulkan? We want to democratize the access to high-performance point-based radiance fields.
+**Why Vulkan?** We want to democratize the access to high-performance point-based radiance fields.
 Existing implementations of Gaussian Splatting are often limited to CUDA, which only runs on NVIDIA GPUs, 
 and OpenGL is deprecated on Apple platforms. Additionally, Vulkan's compute capabilities are the closest to CUDA's 
 with support for warp-level primitives (subgroups).
@@ -12,6 +12,11 @@ with support for warp-level primitives (subgroups).
 [![Windows + Linux](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml)
 
 ![VulkanSplatting Demo macOS](https://github.com/shg8/VulkanSplatting/assets/38004233/66542056-ce30-4998-a612-dd4f6792599e)
+
+## Downloads
+* [Windows](https://github.com/shg8/VulkanSplatting/releases/download/nightly/vulkan_splatting_viewer-windows-latest-amd64-nightly)
+* [macOS (arm64)](https://github.com/shg8/VulkanSplatting/releases/download/nightly/vulkan_splatting_viewer-macos-14-arm64-nightly)
+* [Linux](https://github.com/shg8/VulkanSplatting/releases/download/nightly/vulkan_splatting_viewer-ubuntu-latest-amd64-nightly)
 
 ## Command Line Usage
 
