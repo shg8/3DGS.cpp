@@ -106,8 +106,8 @@ jobs:
     - name: Stage binary for release
       shell: bash
       run: |
-        cp "${{ env.ARTIFACT_PATH }}" "${{ github.workspace }}/${{ steps.strings.outputs.artifact-name }}"
-        echo "ARTIFACT_PATH=${{ github.workspace }}/${{ steps.strings.outputs.artifact-name }}" >> "$GITHUB_ENV"
+        cp "${{ env.ARTIFACT_PATH }}" "./${{ steps.strings.outputs.artifact-name }}"
+        echo "ARTIFACT_PATH=./${{ steps.strings.outputs.artifact-name }}" >> "$GITHUB_ENV"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
