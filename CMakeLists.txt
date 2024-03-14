@@ -67,6 +67,9 @@ FetchContent_MakeAvailable(imgui)
 
 if (APPLE)
     add_compile_definitions(__APPLE__)
+
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH "/usr/local/lib")
 endif ()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
