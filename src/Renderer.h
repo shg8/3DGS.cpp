@@ -4,7 +4,7 @@
 #define GLM_SWIZZLE
 
 #include <atomic>
-#include <VulkanSplatting.h>
+#include "VulkanSplatting.h"
 
 #include "vulkan/Window.h"
 #include "GSScene.h"

@@ -5,7 +5,7 @@
 #include "vulkan/Swapchain.h"
 
 #include <memory>
-#include <shaders.h>
+#include "shaders.h"
 #include <utility>
 
 #include <glm/glm.hpp>
@@ -34,13 +34,13 @@ void Renderer::handleInput() {
     auto translation = window->getCursorTranslation();
     auto keys = window->getKeys(); // W, A, S, D
 
-    if (!guiManager.wantCaptureMouse() && !guiManager.mouseCapture && window->getMouseButton()[0]) {
+    if ((!configuration.enableGui || (!guiManager.wantCaptureMouse() && !guiManager.mouseCapture)) && window->getMouseButton()[0]) {
         window->mouseCapture(true);
         guiManager.mouseCapture = true;
     }
 
     // rotate camera
-    if (guiManager.mouseCapture) {
+    if (!configuration.enableGui || guiManager.mouseCapture) {
         if (translation[0] != 0.0 || translation[1] != 0.0) {
             camera.rotation = glm::rotate(camera.rotation, static_cast<float>(translation[0]) * 0.005f,
                                           glm::vec3(0.0f, -1.0f, 0.0f));
@@ -51,7 +51,7 @@ void Renderer::handleInput() {
 
 
     // move camera
-    if (!guiManager.wantCaptureKeyboard()) {
+    if (!configuration.enableGui || !guiManager.wantCaptureKeyboard()) {
         glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
         if (keys[0]) {
             direction += glm::vec3(0.0f, 0.0f, -1.0f);
@@ -94,7 +94,8 @@ void Renderer::retrieveTimestamps() {
 
     auto metrics = queryManager->parseResults(timestamps);
     for (auto& metric: metrics) {
-        guiManager.pushMetric(metric.first, metric.second / 1000000.0);
+        if (configuration.enableGui)
+            guiManager.pushMetric(metric.first, metric.second / 1000000.0);
     }
 }
 
@@ -178,10 +179,11 @@ Renderer::Renderer(VulkanSplatting::RendererConfiguration configuration) : confi
 }
 
 void Renderer::createGui() {
-    spdlog::debug("Creating GUI");
     if (!configuration.enableGui) {
         return;
     }
+
+    spdlog::debug("Creating GUI");
 
     imguiManager = std::make_shared<ImguiManager>(context, swapchain, window);
     imguiManager->init();

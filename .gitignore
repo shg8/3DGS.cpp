@@ -32,3 +32,10 @@
 *.app
 
 scenes/
+
+apps/apple/VulkanSplatting/shaders.h
+apps/apple/MoltenVK
+apps/apple/VulkanSplatting/ThirdParty
+
+# xcuserdata under any directory is ignored
+xcuserdata/
