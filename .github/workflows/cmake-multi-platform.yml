@@ -32,12 +32,15 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
+            arch: amd64
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
+            arch: amd64
           - os: macos-14
             c_compiler: clang
             cpp_compiler: clang++
+            arch: arm64
         exclude:
           - os: windows-latest
             c_compiler: gcc
@@ -62,10 +65,11 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
+        echo "artifact-name=vulkan_splatting_viewer-${{ matrix.os }}-${{ matrix.arch }}-nightly" >> "$GITHUB_OUTPUT"
 
     - name: Set artifact path (Windows)
       shell: bash
-      run: echo "ARTIFACT_PATH=${{ github.workspace }}\build\apps\viewer\Release\vulkan_splatting_viewer.exe" >> "$GITHUB_ENV"
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/Release/vulkan_splatting_viewer.exe" >> "$GITHUB_ENV"
       if: runner.os == 'Windows'
 
     - name: Set artifact path (POSIX)
@@ -99,10 +103,16 @@ jobs:
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }} -j3
 
+    - name: Stage binary for release
+      shell: bash
+      run: |
+        cp ${{ env.ARTIFACT_PATH }} ${{ github.workspace }}/${{ steps.strings.outputs.artifact-name }}
+        echo "ARTIFACT_PATH=${{ github.workspace }}/${{ steps.strings.outputs.artifact-name }}"
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: vulkan_splatting-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}
+        name: ${{ steps.strings.outputs.artifact-name }}
         path: ${{ env.ARTIFACT_PATH }}
     
     - name: Release nightly
