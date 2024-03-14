@@ -81,7 +81,7 @@ void Renderer::retrieveTimestamps() {
 
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
-    window = std::make_shared<Window>("Vulkan Splatting", 800, 600);
+    window = std::make_shared<Window>("Vulkan Splatting", 1920, 1080);
     context = std::make_shared<VulkanContext>(Window::getRequiredInstanceExtensions(), std::vector<std::string>{},
                                               configuration.enableVulkanValidationLayers);
 
@@ -640,7 +640,7 @@ void Renderer::updateUniforms() {
     auto view = glm::inverse(translation * rotation);
 
     data.view_mat = view;
-    data.proj_mat = glm::perspective(glm::radians(camera.fov), static_cast<float>(width) / static_cast<float>(height),
+    data.proj_mat = glm::perspective(glm::radians(camera.fov) / 2.0f, static_cast<float>(width) / static_cast<float>(height),
                                      camera.nearPlane,
                                      camera.farPlane) * view;
 

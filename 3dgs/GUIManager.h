@@ -9,26 +9,26 @@
 #include "implot/implot.h"
 
 struct ScrollingBuffer {
-    int MaxSize;
-    int Offset;
-    ImVector<ImVec2> Data;
-    ScrollingBuffer(int max_size = 2000) {
-        MaxSize = max_size;
-        Offset  = 0;
-        Data.reserve(MaxSize);
+    int maxSize;
+    int offset;
+    ImVector<ImVec2> data;
+    explicit ScrollingBuffer(const int max_size = 10000) {
+        maxSize = max_size;
+        offset  = 0;
+        data.reserve(maxSize);
     }
     void addPoint(float x, float y) {
-        if (Data.size() < MaxSize)
-            Data.push_back(ImVec2(x,y));
+        if (data.size() < maxSize)
+            data.push_back(ImVec2(x,y));
         else {
-            Data[Offset] = ImVec2(x,y);
-            Offset =  (Offset + 1) % MaxSize;
+            data[offset] = ImVec2(x,y);
+            offset =  (offset + 1) % maxSize;
         }
     }
     void clear() {
-        if (Data.size() > 0) {
-            Data.shrink(0);
-            Offset  = 0;
+        if (data.size() > 0) {
+            data.shrink(0);
+            offset  = 0;
         }
     }
 };
