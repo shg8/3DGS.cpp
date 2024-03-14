@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
-name: CMake on multiple platforms
+name: Cross-platform CMake
 
 on:
   push:
@@ -91,5 +91,5 @@ jobs:
       with:
         name: vulkan_splatting-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}
         path: |
-          ${{ steps.strings.outputs.build-output-dir }}/vulkan_splatting
-          ${{ steps.strings.outputs.build-output-dir }}/Release/vulkan_splatting.exe
+          ${{ steps.strings.outputs.build-output-dir }}/apps/viewer/vulkan_splatting_viewer
+          ${{ steps.strings.outputs.build-output-dir }}/Release/apps/viewer/vulkan_splatting_viewer.exe
