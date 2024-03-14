@@ -54,7 +54,11 @@ FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.13.0
 )
-FetchContent_MakeAvailable(spdlog)
+FetchContent_GetProperties(spdlog)
+if (NOT spdlog_POPULATED)
+    FetchContent_Populate(spdlog)
+    add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
+endif()
 
 FetchContent_Declare(imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -89,21 +93,45 @@ if (APPLE)
     list(APPEND GLSLC_DEFINE "-DAPPLE")
 endif ()
 
+add_executable(embedfile cmake/embedfile.c)
+
+set(SHADER_HEADER "${PROJECT_BINARY_DIR}/shaders/shaders.h")
+message(STATUS "Shader header file: ${SHADER_HEADER}")
+
+# Delete old header file
+add_custom_command(
+        OUTPUT ${SHADER_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E remove ${SHADER_HEADER}
+        DEPENDS ${GLSL_SOURCE_FILES}
+)
+
 foreach (GLSL ${GLSL_SOURCE_FILES})
-    get_filename_component(FILE_NAME ${GLSL} NAME)
+    get_filename_component(FILE_NAME ${GLSL} NAME_WE)
+    string(TOUPPER ${FILE_NAME} FILE_NAME_UPPER)
+    set(FILE_NAME_UPPER "SPV_${FILE_NAME_UPPER}")
     set(SPIRV "${PROJECT_BINARY_DIR}/shaders/${FILE_NAME}.spv")
+    SET(TEMP_HEADER "${PROJECT_BINARY_DIR}/shaders/${FILE_NAME}.h")
     add_custom_command(
             OUTPUT ${SPIRV}
             COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/shaders/"
             COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} "--target-env" "vulkan1.2" -V ${GLSL} -o ${SPIRV} ${GLSLC_DEFINE}
             DEPENDS ${GLSL})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+
+    add_custom_command(
+            OUTPUT ${SHADER_HEADER}
+            COMMAND embedfile ${FILE_NAME_UPPER} ${SPIRV} ${SHADER_HEADER}
+            DEPENDS ${SPIRV}
+            APPEND)
+
+    list(APPEND TEMP_HEADERS ${TEMP_HEADER})
 endforeach (GLSL)
 
 add_custom_target(
         Shaders
-        DEPENDS ${SPIRV_BINARY_FILES}
+        DEPENDS ${SPIRV_BINARY_FILES} ${SHADER_HEADER}
 )
+include_directories(${PROJECT_BINARY_DIR}/shaders)
 
 include_directories(third_party)
 
@@ -154,7 +182,7 @@ target_include_directories(vulkan_splatting PUBLIC
         ${spdlog_SOURCE_DIR}/include
 )
 
-target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp)
+target_link_libraries(vulkan_splatting PUBLIC glfw libenvpp::libenvpp spdlog::spdlog)
 target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan)
 if (UNIX)
     target_link_libraries(vulkan_splatting PUBLIC ${CMAKE_DL_LIBS})

@@ -33,9 +33,9 @@ void GUIManager::buildGui() {
         ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1);
         ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
         for (auto& [name, values]: *metricsMap) {
-            if (!values.Data.empty()) {
-                ImPlot::PlotLine(name.c_str(), &values.Data[0].x, &values.Data[0].y, values.Data.size(), 0,
-                                 values.Offset, 2 * sizeof(float));
+            if (!values.data.empty()) {
+                ImPlot::PlotLine(name.c_str(), &values.data[0].x, &values.data[0].y, values.data.size(), 0,
+                                 values.offset, 2 * sizeof(float));
             }
         }
         ImPlot::EndPlot();
@@ -79,7 +79,7 @@ void GUIManager::pushTextMetric(const std::string& name, float value) {
 void GUIManager::pushMetric(const std::string& name, float value) {
     int maxSize = 600;
     if (!metricsMap->contains(name)) {
-        metricsMap->insert({name, ScrollingBuffer(maxSize)});
+        metricsMap->insert({name, ScrollingBuffer{}});
     }
     metricsMap->at(name).addPoint(ImGui::GetTime(), value);
 }

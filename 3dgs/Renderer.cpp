@@ -5,6 +5,7 @@
 #include "../vulkan/Swapchain.h"
 
 #include <memory>
+#include <shaders.h>
 #include <utility>
 
 #include <glm/glm.hpp>
@@ -99,7 +100,7 @@ void Renderer::retrieveTimestamps() {
 
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
-    window = std::make_shared<Window>("Vulkan Splatting", 800, 600);
+    window = std::make_shared<Window>("Vulkan Splatting", 1920, 1080);
     context = std::make_shared<VulkanContext>(Window::getRequiredInstanceExtensions(), std::vector<std::string>{},
                                               configuration.enableVulkanValidationLayers);
 
@@ -148,7 +149,7 @@ void Renderer::createPreprocessPipeline() {
     vertexAttributeBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(VertexAttributeBuffer), false);
     tileOverlapBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t), false);
 
-    preprocessPipeline = std::make_shared<ComputePipeline>(context, "preprocess");
+    preprocessPipeline = std::make_shared<ComputePipeline>(context,  std::make_shared<Shader>(context, "preprocess", SPV_PREPROCESS, SPV_PREPROCESS_len));
     inputSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     inputSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
                                         scene->vertexBuffer);
@@ -193,7 +194,7 @@ void Renderer::createPrefixSumPipeline() {
     prefixSumPongBuffer = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t), false);
     totalSumBufferHost = Buffer::staging(context, sizeof(uint32_t));
 
-    prefixSumPipeline = std::make_shared<ComputePipeline>(context, "prefix_sum");
+    prefixSumPipeline = std::make_shared<ComputePipeline>(context, std::make_shared<Shader>(context, "prefix_sum", SPV_PREFIX_SUM, SPV_PREFIX_SUM_len));
     auto descriptorSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     descriptorSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
                                              prefixSumPingBuffer);
@@ -225,8 +226,8 @@ void Renderer::createRadixSortPipeline() {
 
     sortHistBuffer = Buffer::storage(context, numWorkgroups * 256 * sizeof(uint32_t), false);
 
-    sortHistPipeline = std::make_shared<ComputePipeline>(context, "hist");
-    sortPipeline = std::make_shared<ComputePipeline>(context, "sort");
+    sortHistPipeline = std::make_shared<ComputePipeline>(context, std::make_shared<Shader>(context, "hist", SPV_HIST, SPV_HIST_len));
+    sortPipeline = std::make_shared<ComputePipeline>(context, std::make_shared<Shader>(context, "sort", SPV_SORT, SPV_SORT_len));
 
     auto descriptorSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     descriptorSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
@@ -267,7 +268,7 @@ void Renderer::createRadixSortPipeline() {
 
 void Renderer::createPreprocessSortPipeline() {
     spdlog::debug("Creating preprocess sort pipeline");
-    preprocessSortPipeline = std::make_shared<ComputePipeline>(context, "preprocess_sort");
+    preprocessSortPipeline = std::make_shared<ComputePipeline>(context, std::make_shared<Shader>(context, "preprocess_sort", SPV_PREPROCESS_SORT, SPV_PREPROCESS_SORT_len));
     auto descriptorSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     descriptorSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
                                              vertexAttributeBuffer);
@@ -293,7 +294,7 @@ void Renderer::createTileBoundaryPipeline() {
     auto tileY = (height + 16 - 1) / 16;
     tileBoundaryBuffer = Buffer::storage(context, tileX * tileY * sizeof(uint32_t) * 2, false);
 
-    tileBoundaryPipeline = std::make_shared<ComputePipeline>(context, "tile_boundary");
+    tileBoundaryPipeline = std::make_shared<ComputePipeline>(context, std::make_shared<Shader>(context, "tile_boundary", SPV_TILE_BOUNDARY, SPV_TILE_BOUNDARY_len));
     auto descriptorSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     descriptorSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
                                              sortKBufferEven);
@@ -310,7 +311,7 @@ void Renderer::createTileBoundaryPipeline() {
 
 void Renderer::createRenderPipeline() {
     spdlog::debug("Creating render pipeline");
-    renderPipeline = std::make_shared<ComputePipeline>(context, "render");
+    renderPipeline = std::make_shared<ComputePipeline>(context, std::make_shared<Shader>(context, "render", SPV_RENDER, SPV_RENDER_len));
     auto inputSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     inputSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
                                         vertexAttributeBuffer);
@@ -696,7 +697,7 @@ void Renderer::updateUniforms() {
     auto view = glm::inverse(translation * rotation);
 
     data.view_mat = view;
-    data.proj_mat = glm::perspective(glm::radians(camera.fov), static_cast<float>(width) / static_cast<float>(height),
+    data.proj_mat = glm::perspective(glm::radians(camera.fov) / 2.0f, static_cast<float>(width) / static_cast<float>(height),
                                      camera.nearPlane,
                                      camera.farPlane) * view;
 

@@ -6,6 +6,7 @@
 #include "GSScene.h"
 
 #include <random>
+#include "shaders.h"
 
 #include "../vulkan/Utils.h"
 #include "../vulkan/DescriptorSet.h"
@@ -155,7 +156,9 @@ std::shared_ptr<Buffer> GSScene::createBuffer(const std::shared_ptr<VulkanContex
 void GSScene::precomputeCov3D(const std::shared_ptr<VulkanContext>&context) {
     cov3DBuffer = createBuffer(context, header.numVertices * sizeof(float) * 6);
 
-    auto pipeline = std::make_shared<ComputePipeline>(context, "precomp_cov3d");
+    auto pipeline = std::make_shared<ComputePipeline>(
+        context, std::make_shared<Shader>(context, "precomp_cov3d", SPV_PRECOMP_COV3D, SPV_PRECOMP_COV3D_len));
+
     auto descriptorSet = std::make_shared<DescriptorSet>(context, FRAMES_IN_FLIGHT);
     descriptorSet->bindBufferToDescriptorSet(0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute,
                                              vertexBuffer);
