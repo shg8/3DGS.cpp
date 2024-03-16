@@ -1,9 +1,9 @@
-#include "Window.h"
+#include "GLFWWindow.h"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 
-Window::Window(std::string name, int width, int height) {
+GLFWWindow::GLFWWindow(std::string name, int width, int height) {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -12,7 +12,7 @@ Window::Window(std::string name, int width, int height) {
     window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 }
 
-VkSurfaceKHR Window::createSurface(std::shared_ptr<VulkanContext> context) {
+VkSurfaceKHR GLFWWindow::createSurface(std::shared_ptr<VulkanContext> context) {
     if (glfwCreateWindowSurface(context->instance.get(), static_cast<GLFWwindow *>(window), nullptr, &surface) !=
         VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
@@ -20,7 +20,7 @@ VkSurfaceKHR Window::createSurface(std::shared_ptr<VulkanContext> context) {
     return surface;
 }
 
-std::array<bool, 3> Window::getMouseButton() {
+std::array<bool, 3> GLFWWindow::getMouseButton() {
     return {
         glfwGetMouseButton(static_cast<GLFWwindow *>(window), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
         glfwGetMouseButton(static_cast<GLFWwindow *>(window), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS,
@@ -28,7 +28,7 @@ std::array<bool, 3> Window::getMouseButton() {
     };
 }
 
-std::vector<std::string> Window::getRequiredInstanceExtensions() {
+std::vector<std::string> GLFWWindow::getRequiredInstanceExtensions() {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     auto extensions = std::vector<std::string>{};
@@ -38,13 +38,13 @@ std::vector<std::string> Window::getRequiredInstanceExtensions() {
     return extensions;
 }
 
-std::pair<uint32_t, uint32_t> Window::getFramebufferSize() const {
+std::pair<uint32_t, uint32_t> GLFWWindow::getFramebufferSize() const {
     int width, height;
     glfwGetFramebufferSize(static_cast<GLFWwindow *>(window), &width, &height);
     return {width, height};
 }
 
-std::array<double, 2> Window::getCursorTranslation() {
+std::array<double, 2> GLFWWindow::getCursorTranslation() {
     double x, y;
     glfwGetCursorPos(static_cast<GLFWwindow *>(window), &x, &y);
     const auto translation = std::array<double, 2>{x - lastX, y - lastY};
@@ -53,7 +53,7 @@ std::array<double, 2> Window::getCursorTranslation() {
     return translation;
 }
 
-std::array<bool, 7> Window::getKeys() {
+std::array<bool, 7> GLFWWindow::getKeys() {
     return {
         glfwGetKey(static_cast<GLFWwindow *>(window), GLFW_KEY_W) == GLFW_PRESS,
         glfwGetKey(static_cast<GLFWwindow *>(window), GLFW_KEY_A) == GLFW_PRESS,
@@ -65,7 +65,7 @@ std::array<bool, 7> Window::getKeys() {
     };
 }
 
-void Window::mouseCapture(bool capture) {
+void GLFWWindow::mouseCapture(bool capture) {
     if (capture) {
         glfwSetInputMode(static_cast<GLFWwindow *>(window), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     } else {
@@ -73,7 +73,7 @@ void Window::mouseCapture(bool capture) {
     }
 }
 
-bool Window::tick() {
+bool GLFWWindow::tick() {
     glfwPollEvents();
     return !glfwWindowShouldClose(static_cast<GLFWwindow *>(window));
 }

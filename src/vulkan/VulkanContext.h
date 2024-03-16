@@ -97,7 +97,6 @@ public:
     vk::UniqueQueryPool queryPool;
 
 private:
-    vk::DynamicLoader dl;
     std::vector<std::string> instanceExtensions;
     std::vector<std::string> deviceExtensions;
     bool validationLayersEnabled;

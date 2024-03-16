@@ -84,13 +84,10 @@ int main(int argc, char** argv) {
         config.enableGui = false;
     }
 
-    if (widthFlag) {
-        config.width = args::get(widthFlag);
-    }
+    auto width = widthFlag ? args::get(widthFlag) : 1280;
+    auto height = heightFlag ? args::get(heightFlag) : 720;
 
-    if (heightFlag) {
-        config.height = args::get(heightFlag);
-    }
+    config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
 
 #ifndef DEBUG
     try {

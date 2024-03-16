@@ -78,5 +78,7 @@ else ()
     add_compile_definitions(NDEBUG)
 endif ()
 
+add_compile_definitions(VKGS_ENABLE_GLFW)
+
 add_subdirectory(src)
 add_subdirectory(apps)

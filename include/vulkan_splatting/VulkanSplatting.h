@@ -4,6 +4,9 @@
 #include <optional>
 #include <string>
 
+class Window;
+class Renderer;
+
 class VulkanSplatting {
 public:
     struct RendererConfiguration {
@@ -15,16 +18,31 @@ public:
         float fov = 45.0f;
         float near = 0.2f;
         float far = 1000.0f;
-        bool enableGui = true;
-        uint32_t width = 800;
-        uint32_t height = 600;
+        bool enableGui = false;
+
+        std::shared_ptr<Window> window;
     };
 
     explicit VulkanSplatting(RendererConfiguration configuration) : configuration(configuration) {}
 
-    void start() const;
+#ifdef VKGS_ENABLE_GLFW
+    static std::shared_ptr<Window> createGlfwWindow(std::string name, int width, int height);
+#endif
+
+#ifdef VKGS_ENABLE_METAL
+    static std::shared_ptr<Window> createMetalWindow(void *caMetalLayer, int width, int height);
+#endif
+
+    void start();
+
+    void initialize();
+
+    void draw();
+
+    void logTranslation(float x, float y);
 private:
     RendererConfiguration configuration;
+    std::shared_ptr<Renderer> renderer;
 };
 
 #endif //VULKANSPLATTING_H

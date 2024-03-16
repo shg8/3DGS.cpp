@@ -62,9 +62,12 @@ public:
 
     void retrieveTimestamps();
 
+    void draw();
+
     void run();
 
     ~Renderer();
+
 private:
     VulkanSplatting::RendererConfiguration configuration;
     std::shared_ptr<Window> window;

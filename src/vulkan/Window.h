@@ -7,34 +7,28 @@
 
 #include "VulkanContext.h"
 
-
 class Window {
 public:
-    Window(std::string name, int width, int height);
+    virtual VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) = 0;
 
-    VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context);
+    virtual std::array<bool, 3> getMouseButton() { return {false, false, false}; }
 
-    std::array<bool, 3> getMouseButton();
+    virtual std::vector<std::string> getRequiredInstanceExtensions() = 0;
 
-    static std::vector<std::string> getRequiredInstanceExtensions();
+    [[nodiscard]] virtual std::pair<uint32_t, uint32_t> getFramebufferSize() const = 0;
 
-    std::pair<uint32_t, uint32_t> getFramebufferSize() const;
+    virtual std::array<double, 2> getCursorTranslation() { return {0, 0}; }
 
-    std::array<double, 2> getCursorTranslation();
+    virtual std::array<bool, 7> getKeys() { return {false, false, false, false, false, false, false}; }
 
-    std::array<bool, 7> getKeys();
+    virtual void mouseCapture(bool capture) { }
 
-    void mouseCapture(bool capture);
+    virtual bool tick() { return false; };
 
-    bool tick();
+    virtual void logTranslation(float x, float y) { };
 
-    void* window;
+    virtual ~Window() = default;
 
-private:
-    VkSurfaceKHR surface;
-
-    double lastX = 0.0;
-    double lastY = 0.0;
 };
 
 
