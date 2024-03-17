@@ -71,8 +71,10 @@ After installing the Vulkan SDK, please proceed with CMake configuration and bui
 ### iOS, iPadOS, visionOS
 1. Make sure that the Vulkan SDK is installed
 2. Run the `xcode_setup` CMake target
-3. Set your development team id in `project.xcconfig`
-4. Profit
+3. Download the [prebuilt MoltenVK libraries](https://github.com/KhronosGroup/MoltenVK/actions) or build it yourself. Unzip the downloaded artifact from a MoltenVK workflow. If you're not sure which one you want to use, pick the one from the latest tag.
+4. Place the MoltenVK folder that contains the `dynamic`, `include`, and `static` folders under `apps/apple`
+5. Set your development team id in `project.xcconfig`
+6. Profit
 
 ## TODO
 
