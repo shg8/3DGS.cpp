@@ -16,4 +16,12 @@ void Shader::load() {
         create_info.pCode = reinterpret_cast<const uint32_t *>(data);
     }
     shader = context->device->createShaderModuleUnique(create_info);
+
+    if (context->validationLayersEnabled) {
+        context->device->setDebugUtilsObjectNameEXT(vk::DebugUtilsObjectNameInfoEXT {
+            vk::ObjectType::eShaderModule,
+            reinterpret_cast<uint64_t>(static_cast<VkShaderModule>(shader.get())),
+            filename.c_str()
+        });
+    }
 }

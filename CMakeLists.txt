@@ -78,18 +78,7 @@ else ()
     add_compile_definitions(NDEBUG)
 endif ()
 
+add_compile_definitions(VKGS_ENABLE_GLFW)
+
 add_subdirectory(src)
 add_subdirectory(apps)
-
-#add_custom_target(
-#        Shaders
-#        DEPENDS ${SPIRV_BINARY_FILES} ${SHADER_HEADER}
-#)
-#include_directories(${PROJECT_BINARY_DIR}/shaders)
-
-#add_custom_command(TARGET vulkan_splatting POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:vulkan_splatting>/shaders/"
-#        COMMAND ${CMAKE_COMMAND} -E copy_directory
-#        "${PROJECT_BINARY_DIR}/shaders"
-#        "$<TARGET_FILE_DIR:vulkan_splatting>/shaders"
-#)

@@ -2,6 +2,34 @@
 
 #include <iostream>
 
+#include "imgui.h"
+#include "implot/implot.h"
+
+struct ScrollingBuffer {
+    int maxSize;
+    int offset;
+    ImVector<ImVec2> data;
+    explicit ScrollingBuffer(const int max_size = 10000) {
+        maxSize = max_size;
+        offset  = 0;
+        data.reserve(maxSize);
+    }
+    void addPoint(float x, float y) {
+        if (data.size() < maxSize)
+            data.push_back(ImVec2(x,y));
+        else {
+            data[offset] = ImVec2(x,y);
+            offset =  (offset + 1) % maxSize;
+        }
+    }
+    void clear() {
+        if (data.size() > 0) {
+            data.shrink(0);
+            offset  = 0;
+        }
+    }
+};
+
 static std::shared_ptr<std::unordered_map<std::string, ScrollingBuffer>> metricsMap;
 static std::shared_ptr<std::unordered_map<std::string, float>> textMetricsMap;
 

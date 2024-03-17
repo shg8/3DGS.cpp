@@ -68,6 +68,12 @@ cmake -DCMAKE_BUILD_TYPE=Release -DVULKAN_SDK=\INSTALL\LOCATION\OF\YOUR\SDK -S .
 
 After installing the Vulkan SDK, please proceed with CMake configuration and build steps as usual.
 
+### iOS, iPadOS, visionOS
+1. Make sure that the Vulkan SDK is installed
+2. Run the `xcode_setup` CMake target
+3. Set your development team id in `project.xcconfig`
+4. Profit
+
 ## TODO
 
 - [x] Better controls and GUI on GLFW

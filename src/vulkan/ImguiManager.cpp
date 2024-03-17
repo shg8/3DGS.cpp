@@ -1,5 +1,11 @@
 #include "ImguiManager.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
+#include "windowing/GLFWWindow.h"
+
 ImguiManager::ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain,
                            std::shared_ptr<Window> window) : context(context), swapchain(swapchain), window(window) {
 }
@@ -113,7 +119,8 @@ void ImguiManager::init() {
     descriptorPool = context->device->createDescriptorPoolUnique(poolInfo);
 
     ImGui::CreateContext();
-    ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow *>(window->window), true);
+    auto glfwWindow = std::reinterpret_pointer_cast<GLFWWindow>(window);
+    ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow *>(glfwWindow->window), true);
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = context->instance.get();
     init_info.PhysicalDevice = context->physicalDevice;

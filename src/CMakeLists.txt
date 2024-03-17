@@ -12,9 +12,11 @@ file(GLOB EXTERNAL_SOURCE
         third_party/implot/implot_items.cpp
 )
 
-file(GLOB_RECURSE SOURCE
+file(GLOB SOURCE
         *.cpp
-        vulkan/*.cpp)
+        vulkan/*.cpp
+        vulkan/pipelines/*.cpp
+        vulkan/windowing/GLFWWindow.cpp)
 
 add_library(vulkan_splatting STATIC
         ${SOURCE}

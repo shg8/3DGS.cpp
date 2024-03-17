@@ -7,10 +7,6 @@
 #include "Swapchain.h"
 #include "Window.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
-
 class ImguiManager {
 public:
     ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain, std::shared_ptr<Window> window);

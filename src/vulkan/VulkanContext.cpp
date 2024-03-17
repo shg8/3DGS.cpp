@@ -39,19 +39,29 @@ VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions
     : instanceExtensions(instance_extensions), deviceExtensions(device_extensions),
       validationLayersEnabled(validation_layers_enabled) {
 #ifdef __APPLE__
-    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-    deviceExtensions.push_back("VK_KHR_portability_subset");
-    deviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+    #ifndef VKGS_ENABLE_METAL
+        instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+        deviceExtensions.push_back("VK_KHR_portability_subset");
+    #endif
 #endif
-
     deviceExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 
     if (validation_layers_enabled) {
+        deviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+        instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
-    auto getInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>(
-        "vkGetInstanceProcAddr");
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(getInstanceProcAddr);
+
+#ifndef VKGS_ENABLE_METAL
+    VULKAN_HPP_DEFAULT_DISPATCHER.init();
+#else
+    void *libvulkan = dlopen("MoltenVK.framework/MoltenVK", RTLD_NOW | RTLD_LOCAL);
+    if (!libvulkan) {
+        throw std::runtime_error("MoltenVK not found");
+    }
+    auto vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr) dlsym(libvulkan, "vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+#endif
 }
 
 void VulkanContext::createInstance() {
