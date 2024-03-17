@@ -131,7 +131,11 @@ private:
 
     std::vector<vk::UniqueSemaphore> renderFinishedSemaphores;
 
-    uint32_t numRadixSortBlocksPerWorkgroup = __APPLE__ ? 256 : 32;
+#ifdef __APPLE__
+    uint32_t numRadixSortBlocksPerWorkgroup = 256;
+#else
+    uint32_t numRadixSortBlocksPerWorkgroup = 32;
+#endif
 
     int fpsCounter = 0;
     std::chrono::high_resolution_clock::time_point lastFpsTime = std::chrono::high_resolution_clock::now();
