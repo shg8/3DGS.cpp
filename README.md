@@ -1,6 +1,6 @@
-# VulkanSplatting
+# 3DGS.cpp
 
-VulkanSplatting is an (not-yet-) highly optimized, cross-platform implementation
+3DGS.cpp is an (not-yet-) highly optimized, cross-platform implementation
 of [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) using
 the [Vulkan API](https://www.khronos.org/vulkan/) and compute pipelines.
 
@@ -9,14 +9,14 @@ Existing implementations of Gaussian Splatting are often limited to CUDA, which 
 and OpenGL is deprecated on Apple platforms. Additionally, Vulkan's compute capabilities are the closest to CUDA's 
 with support for warp-level primitives (subgroups).
 
-[![Windows + Linux](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/shg8/VulkanSplatting/actions/workflows/cmake-multi-platform.yml)
+[![Windows + Linux](https://github.com/shg8/3DGS.cpp/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=main)](https://github.com/shg8/3DGS.cpp/actions/workflows/cmake-multi-platform.yml)
 
-![VulkanSplatting Demo macOS](https://github.com/shg8/VulkanSplatting/assets/38004233/66542056-ce30-4998-a612-dd4f6792599e)
+![3DGS.cpp Demo macOS](https://github.com/shg8/3DGS.cpp/assets/38004233/66542056-ce30-4998-a612-dd4f6792599e)
 
 ## Downloads
-* [Windows](https://github.com/shg8/VulkanSplatting/releases/download/nightly/vulkan_splatting_viewer-windows-latest-amd64-nightly)
-* [macOS (arm64)](https://github.com/shg8/VulkanSplatting/releases/download/nightly/vulkan_splatting_viewer-macos-14-arm64-nightly)
-* [Linux](https://github.com/shg8/VulkanSplatting/releases/download/nightly/vulkan_splatting_viewer-ubuntu-latest-amd64-nightly)
+* [Windows](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-windows-latest-amd64-nightly)
+* [macOS (arm64)](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-macos-14-arm64-nightly)
+* [Linux](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-ubuntu-latest-amd64-nightly)
 
 ## Command Line Usage
 
@@ -44,7 +44,7 @@ with support for warp-level primitives (subgroups).
 
 ### Linux
 
-VulkanSplatting requires the following dependencies:
+3DGS.cpp requires the following dependencies:
 
 `Vulkan headers, Vulkan validation layers, glslangValidator, glfw, glm`
 
@@ -91,7 +91,7 @@ Please feel free to open an issue if you have any feature suggestions or are int
 
 ## Contributing
 If you are interested in integrating your Gaussian Splatting variant, please open an issue or a pull request.
-VulkanSplatting's shaders follow the procedures outlined in the original paper, so it should be relatively
+3DGS.cpp's shaders follow the procedures outlined in the original paper, so it should be relatively
 easy to port your CUDA code. With cross-platform support, it's a great way to expand the reach and adoption of your research.
 If there are any questions, feel free to [send me an email](mailto:me@stevengao.net).
 
