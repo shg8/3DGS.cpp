@@ -77,11 +77,12 @@ After installing the Vulkan SDK, please proceed with CMake configuration and bui
 ## TODO
 
 - [x] Better controls and GUI on GLFW
+- [x] Apps for iOS and visionOS
+- [ ] Fully immersive app on visionOS using the Compositor Service framework
+- [ ] OpenXR support
+- [ ] App for Android and Qualcomm Spaces
 - [ ] Implement SOTA parallel radix sort
 - [ ] Use Vulkan subgroups to batch Gaussian retrievals at the warp level
-- [ ] OpenXR support
-- [ ] Apps for iOS and visionOS
-- [ ] App for Android and Qualcomm Spaces
 - [ ] Training
 
 Please feel free to open an issue if you have any feature suggestions or are interested in contributing.
