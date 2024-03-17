@@ -99,6 +99,22 @@ void Renderer::retrieveTimestamps() {
     }
 }
 
+void Renderer::recreateSwapchain() {
+    auto oldExtent = swapchain->swapchainExtent;
+    swapchain->recreate();
+    if (swapchain->swapchainExtent == oldExtent) {
+        return;
+    }
+
+    auto [width, height] = swapchain->swapchainExtent;
+    auto tileX = (width + 16 - 1) / 16;
+    auto tileY = (height + 16 - 1) / 16;
+    tileBoundaryBuffer->realloc(tileX * tileY * sizeof(uint32_t) * 2);
+
+    recordPreprocessCommandBuffer();
+    createRenderPipeline();
+}
+
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
     window = configuration.window;
@@ -114,6 +130,7 @@ void Renderer::initializeVulkan() {
     vk::PhysicalDeviceVulkan12Features pdf12{};
     pdf.shaderStorageImageWriteWithoutFormat = true;
     pdf.shaderInt64 = true;
+    // pdf.robustBufferAccess = true;
     // pdf12.shaderFloat16 = true;
     // pdf12.shaderBufferInt64Atomics = true;
     // pdf12.shaderSharedInt64Atomics = true;
@@ -354,7 +371,7 @@ void Renderer::draw() {
                                                     swapchain->imageAvailableSemaphores[0].get(),
                                                     nullptr, &currentImageIndex);
     if (res == vk::Result::eErrorOutOfDateKHR) {
-        swapchain->recreate();
+        recreateSwapchain();
         return;
     } else if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
         throw std::runtime_error("Failed to acquire swapchain image");
@@ -393,7 +410,7 @@ startOfRenderLoop:
 
     ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
     if (ret == vk::Result::eErrorOutOfDateKHR || ret == vk::Result::eSuboptimalKHR) {
-        swapchain->recreate();
+        recreateSwapchain();
     } else if (ret != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to present swapchain image");
     }
@@ -419,6 +436,13 @@ void Renderer::run() {
 
         retrieveTimestamps();
     }
+
+    context->device->waitIdle();
+}
+
+void Renderer::stop() {
+    // wait till device is idle
+    running = false;
 
     context->device->waitIdle();
 }
@@ -489,25 +513,6 @@ void Renderer::recordPreprocessCommandBuffer() {
                                             &totalSumRegion);
     }
 
-    vertexAttributeBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
-
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
-                                            queryManager->registerQuery("prefix_sum_end"));
-
-    preprocessSortPipeline->bind(preprocessCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
-                                            queryManager->registerQuery("preprocess_sort_start"));
-    uint32_t tileX = (swapchain->swapchainExtent.width + 16 - 1) / 16;
-    // assert(tileX == 50);
-    preprocessCommandBuffer->pushConstants(preprocessSortPipeline->pipelineLayout.get(),
-                                           vk::ShaderStageFlagBits::eCompute, 0,
-                                           sizeof(uint32_t), &tileX);
-    preprocessCommandBuffer->dispatch(numGroups, 1, 1);
-
-    sortKBufferEven->computeWriteReadBarrier(preprocessCommandBuffer.get());
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
-                                            queryManager->registerQuery("preprocess_sort_end"));
-
     preprocessCommandBuffer->end();
 }
 
@@ -555,6 +560,26 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     }
 #endif
 
+    vertexAttributeBuffer->computeWriteReadBarrier(renderCommandBuffer.get());
+
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("prefix_sum_end"));
+
+    const auto iters = static_cast<uint32_t>(std::ceil(std::log2(static_cast<float>(scene->getNumVertices()))));
+    auto numGroups = (scene->getNumVertices() + 255) / 256;
+    preprocessSortPipeline->bind(renderCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("preprocess_sort_start"));
+    uint32_t tileX = (swapchain->swapchainExtent.width + 16 - 1) / 16;
+    // assert(tileX == 50);
+    renderCommandBuffer->pushConstants(preprocessSortPipeline->pipelineLayout.get(),
+                                           vk::ShaderStageFlagBits::eCompute, 0,
+                                           sizeof(uint32_t), &tileX);
+    renderCommandBuffer->dispatch(numGroups, 1, 1);
+
+    sortKBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+                                            queryManager->registerQuery("preprocess_sort_end"));
 
     // std::cout << "Num instances: " << numInstances << std::endl;
 
@@ -698,8 +723,10 @@ void Renderer::updateUniforms() {
     auto translation = glm::translate(glm::mat4(1.0f), camera.position);
     auto view = glm::inverse(translation * rotation);
 
+    float tan_fovx = std::tan(glm::radians(camera.fov) / 2.0);
+    float tan_fovy = tan_fovx * static_cast<float>(height) / static_cast<float>(width);
     data.view_mat = view;
-    data.proj_mat = glm::perspective(glm::radians(camera.fov) / 2.0f,
+    data.proj_mat = glm::perspective(std::atan(tan_fovy) * 2.0f,
                                      static_cast<float>(width) / static_cast<float>(height),
                                      camera.nearPlane,
                                      camera.farPlane) * view;
@@ -717,8 +744,8 @@ void Renderer::updateUniforms() {
     data.proj_mat[1][1] *= -1.0f;
     data.proj_mat[2][1] *= -1.0f;
     data.proj_mat[3][1] *= -1.0f;
-    data.tan_fovx = std::tan(glm::radians(camera.fov) / 2.0);
-    data.tan_fovy = data.tan_fovx * static_cast<float>(height) / static_cast<float>(width);
+    data.tan_fovx = tan_fovx;
+    data.tan_fovy = tan_fovy;
     uniformBuffer->upload(&data, sizeof(UniformBuffer), 0);
 }
 

@@ -34,7 +34,7 @@ public:
         glm::uvec4 aabb;
         glm::vec2 uv;
         float depth;
-        float __padding[1];
+        uint32_t __padding[1];
     };
 
     struct Camera {
@@ -43,6 +43,10 @@ public:
         float fov;
         float nearPlane;
         float farPlane;
+
+        void translate(glm::vec3 translation) {
+            position += rotation * translation;
+        }
     };
 
     struct RadixSortPushConstants {
@@ -62,11 +66,23 @@ public:
 
     void retrieveTimestamps();
 
+    void recreateSwapchain();
+
     void draw();
 
     void run();
 
+    void stop();
+
     ~Renderer();
+
+    Camera camera {
+        .position = glm::vec3(0.0f, 0.0f, 0.0f),
+        .rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+        .fov = 45.0f,
+        .nearPlane = 0.1f,
+        .farPlane = 1000.0f
+    };
 
 private:
     VulkanSplatting::RendererConfiguration configuration;
@@ -106,14 +122,6 @@ private:
 
     std::shared_ptr<Swapchain> swapchain;
 
-    Camera camera {
-        .position = glm::vec3(0.0f, 0.0f, 0.0f),
-        .rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-        .fov = 45.0f,
-        .nearPlane = 0.1f,
-        .farPlane = 1000.0f
-    };
-
     vk::UniqueCommandPool commandPool;
 
     vk::UniqueCommandBuffer preprocessCommandBuffer;
@@ -128,7 +136,7 @@ private:
     int fpsCounter = 0;
     std::chrono::high_resolution_clock::time_point lastFpsTime = std::chrono::high_resolution_clock::now();
 
-    unsigned int sortBufferSizeMultiplier = 3;
+    unsigned int sortBufferSizeMultiplier = 1;
 
     void initializeVulkan();
 

@@ -34,3 +34,11 @@ void VulkanSplatting::draw() {
 void VulkanSplatting::logTranslation(float x, float y) {
     configuration.window->logTranslation(x, y);
 }
+
+void VulkanSplatting::logMovement(float x, float y, float z) {
+    renderer->camera.translate(glm::vec3(x, y, z));
+}
+
+void VulkanSplatting::stop() {
+    renderer->stop();
+}

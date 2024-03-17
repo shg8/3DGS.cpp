@@ -40,6 +40,10 @@ public:
     void draw();
 
     void logTranslation(float x, float y);
+
+    void logMovement(float x, float y, float z);
+
+    void stop();
 private:
     RendererConfiguration configuration;
     std::shared_ptr<Renderer> renderer;

@@ -49,6 +49,7 @@ VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions
     if (validation_layers_enabled) {
         deviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
         instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
 #ifndef VKGS_ENABLE_METAL

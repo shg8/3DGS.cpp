@@ -27,6 +27,8 @@ public:
 
     virtual void logTranslation(float x, float y) { };
 
+    virtual void logMovement(float x, float y) { };
+
     virtual ~Window() = default;
 
 };

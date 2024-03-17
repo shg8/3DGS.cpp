@@ -96,10 +96,10 @@ public:
     vk::UniqueDescriptorPool descriptorPool;
     vk::UniqueQueryPool queryPool;
 
+    bool validationLayersEnabled;
 private:
     std::vector<std::string> instanceExtensions;
     std::vector<std::string> deviceExtensions;
-    bool validationLayersEnabled;
 
     vk::UniqueCommandPool commandPool;
 
