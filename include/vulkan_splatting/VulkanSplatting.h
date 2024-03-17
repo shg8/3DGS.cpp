@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <string>
+#include <memory>
 
 class Window;
 class Renderer;
