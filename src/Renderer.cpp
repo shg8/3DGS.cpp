@@ -472,7 +472,7 @@ void Renderer::recordPreprocessCommandBuffer() {
     preprocessCommandBuffer->resetQueryPool(context->queryPool.get(), 0, 12);
 
     preprocessPipeline->bind(preprocessCommandBuffer, 0, 0);
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                             queryManager->registerQuery("preprocess_start"));
     preprocessCommandBuffer->dispatch(numGroups, 1, 1);
     tileOverlapBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
@@ -482,11 +482,11 @@ void Renderer::recordPreprocessCommandBuffer() {
 
     prefixSumPingBuffer->computeWriteReadBarrier(preprocessCommandBuffer.get());
 
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                             queryManager->registerQuery("preprocess_end"));
 
     prefixSumPipeline->bind(preprocessCommandBuffer, 0, 0);
-    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                             queryManager->registerQuery("prefix_sum_start"));
     const auto iters = static_cast<uint32_t>(std::ceil(std::log2(static_cast<float>(scene->getNumVertices()))));
     for (uint32_t timestep = 0; timestep <= iters; timestep++) {
@@ -512,6 +512,9 @@ void Renderer::recordPreprocessCommandBuffer() {
         preprocessCommandBuffer->copyBuffer(prefixSumPongBuffer->buffer, totalSumBufferHost->buffer, 1,
                                             &totalSumRegion);
     }
+
+    preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
+                                        queryManager->registerQuery("prefix_sum_end"));
 
     preprocessCommandBuffer->end();
 }
@@ -562,13 +565,10 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
     vertexAttributeBuffer->computeWriteReadBarrier(renderCommandBuffer.get());
 
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
-                                            queryManager->registerQuery("prefix_sum_end"));
-
     const auto iters = static_cast<uint32_t>(std::ceil(std::log2(static_cast<float>(scene->getNumVertices()))));
     auto numGroups = (scene->getNumVertices() + 255) / 256;
     preprocessSortPipeline->bind(renderCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                             queryManager->registerQuery("preprocess_sort_start"));
     uint32_t tileX = (swapchain->swapchainExtent.width + 16 - 1) / 16;
     // assert(tileX == 50);
@@ -578,18 +578,16 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     renderCommandBuffer->dispatch(numGroups, 1, 1);
 
     sortKBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                             queryManager->registerQuery("preprocess_sort_end"));
 
     // std::cout << "Num instances: " << numInstances << std::endl;
 
     assert(numInstances <= scene->getNumVertices() * sortBufferSizeMultiplier);
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
+                                                queryManager->registerQuery("sort_start"));
     for (auto i = 0; i < 8; i++) {
         sortHistPipeline->bind(renderCommandBuffer, 0, i % 2 == 0 ? 0 : 1);
-        if (i == 0) {
-            renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
-                                                queryManager->registerQuery("sort_start"));
-        }
         auto invocationSize = (numInstances + numRadixSortBlocksPerWorkgroup - 1) / numRadixSortBlocksPerWorkgroup;
         invocationSize = (invocationSize + 255) / 256;
 
@@ -619,12 +617,9 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
             sortKBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
             sortVBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
         }
-
-        if (i == 7) {
-            renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
-                                                queryManager->registerQuery("sort_end"));
-        }
     }
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
+                                                queryManager->registerQuery("sort_end"));
 
     renderCommandBuffer->fillBuffer(tileBoundaryBuffer->buffer, 0, VK_WHOLE_SIZE, 0);
 
@@ -636,7 +631,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
     // Since we have 64 bit keys, the sort result is always in the even buffer
     tileBoundaryPipeline->bind(renderCommandBuffer, 0, 0);
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("tile_boundary_start"));
     renderCommandBuffer->pushConstants(tileBoundaryPipeline->pipelineLayout.get(),
                                        vk::ShaderStageFlagBits::eCompute, 0,
@@ -644,11 +639,11 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     renderCommandBuffer->dispatch((numInstances + 255) / 256, 1, 1);
 
     tileBoundaryBuffer->computeWriteReadBarrier(renderCommandBuffer.get());
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("tile_boundary_end"));
 
     renderPipeline->bind(renderCommandBuffer, 0, std::vector<uint32_t>{0, currentImageIndex});
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, context->queryPool.get(),
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("render_start"));
     auto [width, height] = swapchain->swapchainExtent;
     uint32_t constants[2] = {width, height};
@@ -691,7 +686,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
                                              vk::PipelineStageFlagBits::eBottomOfPipe,
                                              vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
     }
-    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, context->queryPool.get(),
+    renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("render_end"));
 
     if (configuration.enableGui) {
@@ -704,7 +699,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
         imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
 
         renderCommandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                             vk::PipelineStageFlagBits::eBottomOfPipe,
+                                             vk::PipelineStageFlagBits::eComputeShader,
                                              vk::DependencyFlagBits::eByRegion, nullptr, nullptr, imageMemoryBarrier);
     }
     renderCommandBuffer->end();

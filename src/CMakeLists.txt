@@ -18,6 +18,9 @@ file(GLOB SOURCE
         vulkan/pipelines/*.cpp
         vulkan/windowing/GLFWWindow.cpp)
 
+# Remove DummyGUIManager.cpp from source list
+list(REMOVE_ITEM SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/DummyGUIManager.cpp)
+
 add_library(vulkan_splatting STATIC
         ${SOURCE}
         ${EXTERNAL_SOURCE}

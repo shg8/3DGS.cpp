@@ -82,6 +82,8 @@ int main(int argc, char** argv) {
 
     if (noGuiFlag) {
         config.enableGui = false;
+    } else {
+        config.enableGui = true;
     }
 
     auto width = widthFlag ? args::get(widthFlag) : 1280;
