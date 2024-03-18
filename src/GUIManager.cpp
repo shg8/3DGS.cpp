@@ -79,6 +79,9 @@ void GUIManager::buildGui() {
     for (auto& [name, value]: *textMetricsMap) {
         ImGui::Text("%s: %.2f", name.c_str(), value);
     }
+    for (auto & [name, values]: *metricsMap) {
+        ImGui::Text("%s: %.2f", name.c_str(), values.data.empty() ? 0 : values.data.back().y);
+    }
     ImGui::End();
 
     ImGui::SetNextWindowPos(ImVec2(10, 310), ImGuiCond_FirstUseEver);
