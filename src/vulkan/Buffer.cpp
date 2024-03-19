@@ -35,7 +35,7 @@ void Buffer::alloc() {
     if (res != VK_SUCCESS) {
         throw std::runtime_error("Failed to create buffer");
     }
-    buffer = static_cast<vk::Buffer>(vkBuffer);
+    buffer = vk::Buffer(vkBuffer);
 }
 
 Buffer::Buffer(const std::shared_ptr<VulkanContext>& _context, uint32_t size, vk::BufferUsageFlags usage,
@@ -120,12 +120,13 @@ void Buffer::realloc(uint64_t newSize) {
     size = newSize;
     alloc();
 
+    vk::DescriptorBufferInfo bufferInfo(buffer, allocation_info.offset, size);
+
     std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
     for (auto& tuple: boundDescriptorSets) {
         auto descriptorSet = std::get<0>(tuple);
         auto shared = descriptorSet.lock();
         if (shared) {
-            vk::DescriptorBufferInfo bufferInfo(buffer, 0, size);
             writeDescriptorSets.emplace_back(shared->descriptorSets[std::get<1>(tuple)].get(),
                                             std::get<2>(tuple), 0, 1,
                                             std::get<3>(tuple), nullptr,

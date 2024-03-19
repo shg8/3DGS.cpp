@@ -132,9 +132,11 @@ void Renderer::initializeVulkan() {
     pdf.shaderStorageImageWriteWithoutFormat = true;
     pdf.shaderInt64 = true;
     // pdf.robustBufferAccess = true;
-    // pdf12.shaderFloat16 = true;
-    // pdf12.shaderBufferInt64Atomics = true;
-    // pdf12.shaderSharedInt64Atomics = true;
+    // pdf12.shaderFloat16 = true;]
+#ifndef __APPLE__
+    pdf12.shaderBufferInt64Atomics = true;
+    pdf12.shaderSharedInt64Atomics = true;
+#endif
 
     context->createLogicalDevice(pdf, pdf11, pdf12);
     context->createDescriptorPool(1);
