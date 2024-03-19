@@ -101,6 +101,7 @@ void Renderer::retrieveTimestamps() {
 
 void Renderer::recreateSwapchain() {
     auto oldExtent = swapchain->swapchainExtent;
+    spdlog::debug("Recreating swapchain");
     swapchain->recreate();
     if (swapchain->swapchainExtent == oldExtent) {
         return;
@@ -408,7 +409,13 @@ startOfRenderLoop:
     presentInfo.pSwapchains = &swapchain->swapchain.get();
     presentInfo.pImageIndices = &currentImageIndex;
 
-    ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
+    try {
+        ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
+    } catch (vk::OutOfDateKHRError& e) {
+        recreateSwapchain();
+        return;
+    }
+
     if (ret == vk::Result::eErrorOutOfDateKHR || ret == vk::Result::eSuboptimalKHR) {
         recreateSwapchain();
     } else if (ret != vk::Result::eSuccess) {
@@ -527,7 +534,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     }
 
     uint32_t numInstances = totalSumBufferHost->readOne<uint32_t>();
-    spdlog::debug("Num instances: {}", numInstances);
+    // spdlog::debug("Num instances: {}", numInstances);
     guiManager.pushTextMetric("instances", numInstances);
     if (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {
         auto old = sortBufferSizeMultiplier;
