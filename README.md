@@ -1,6 +1,6 @@
 # 3DGS.cpp
 
-3DGS.cpp is an (not-yet-) highly optimized, cross-platform implementation
+3DGS.cpp is a high performance, cross-platform implementation
 of [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) using
 the [Vulkan API](https://www.khronos.org/vulkan/) and compute pipelines.
 
@@ -19,30 +19,29 @@ with support for warp-level primitives (subgroups).
 * [Linux](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-ubuntu-latest-amd64-nightly)
 * iOS, iPad OS, visionOS (as an iPad app) on [TestFlight](https://testflight.apple.com/join/0WzabeP7)
 
-## Command Line Usage
+## Command Line Viewer
 
 ```
-./vulkan_splatting [options] <input_file.ply>
+  ./vulkan_splatting_viewer {OPTIONS} [scene]
+
+    Vulkan Splatting
+
+  OPTIONS:
+
+      -h, --help                        Display this help menu
+      --validation                      Enable Vulkan validation layers
+      -v, --verbose                     Enable verbose logging
+      -d[physical-device],
+      --device=[physical-device]        Select physical device by index
+      -i, --immediate-swapchain         Set swapchain mode to immediate
+                                        (VK_PRESENT_MODE_IMMEDIATE_KHR)
+      -w[width], --width=[width]        Set window width
+      -h[height], --height=[height]     Set window height
+      --no-gui                          Disable GUI
+      scene                             Path to scene fil
 ```
-
-### Options
-
-- `--validation`: Enable Vulkan validation layers
-
-- `-v`, `--verbose`: Enable verbose logging
-
-- `-d`, `--device <index>`: Select GPU by index
-
-- `-i`, `--immediate-swapchain`: Set swapchain mode to immediate (VK_PRESENT_MODE_IMMEDIATE_KHR)
-
-- `-w`, `--width <width>`: Set window width
-
-- `-h`, `--height <height>`: Set window height
-
-- `--no-gui`: Disable GUI
 
 ## Building
-
 ### Linux
 
 3DGS.cpp requires the following dependencies:
@@ -53,26 +52,26 @@ The easiest way to install the first three is through the [LunarG Vulkan SDK](ht
 Alternatively, you can install the corresponding packages from your distro. For Ubuntu, the packages to install
 are `vulkan-headers, vulkan-validationlayers, glslang-dev, libglfw3-dev, libglm-dev`.
 
+```
+git clone https://github.com/shg8/3DGS.cpp/
+cd 3DGS.cpp
+mkdir build
+cmake -DCMAKE_BUILD_TYPE=Release -S ./ -B ./build
+cmake --build ./build -j4
+```
+The command line viewer will be under `build/apps/viewer/`.
 ### Windows
 
 After installing Vulkan SDK, set the `VULKAN_SDK` environmental variable to the install path. Alternatively,
 pass `-DVULKAN_SDK=\INSTALL\LOCATION\OF\YOUR\SDK` to CMake when configuring.
 
-A full CMake configure command is as follows:
-
-```
-mkdir .\VulkanSplatting\build
-cmake -DCMAKE_BUILD_TYPE=Release -DVULKAN_SDK=\INSTALL\LOCATION\OF\YOUR\SDK -S .\VulkanSplatting -B .\VulkanSplatting\build
-```
-
 ### macOS
-
-After installing the Vulkan SDK, please proceed with CMake configuration and build steps as usual.
+After installing the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), please proceed with CMake configuration and build steps.
 
 ### iOS, iPadOS, visionOS
 1. Make sure that the Vulkan SDK is installed
 2. Run the `xcode_setup` CMake target
-3. Download the [prebuilt MoltenVK libraries](https://github.com/KhronosGroup/MoltenVK/actions) or build it yourself. Unzip the downloaded artifact from a MoltenVK workflow. If you're not sure which one you want to use, pick the one from the latest tag.
+3. Download the [prebuilt MoltenVK libraries](https://github.com/KhronosGroup/MoltenVK/actions) or build it yourself. Unzip the downloaded artifact from a MoltenVK workflow. If you're not sure which one you want to use, pick the one from the latest tag
 4. Place the MoltenVK folder that contains the `dynamic`, `include`, and `static` folders under `apps/apple`
 5. Set your development team id in `project.xcconfig`
 6. Profit
