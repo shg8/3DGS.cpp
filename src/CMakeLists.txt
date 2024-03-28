@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(vulkan_splatting)
+project(3dgs_cpp)
 
 add_subdirectory(shaders)
 
@@ -21,14 +21,14 @@ file(GLOB SOURCE
 # Remove DummyGUIManager.cpp from source list
 list(REMOVE_ITEM SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/DummyGUIManager.cpp)
 
-add_library(vulkan_splatting STATIC
+add_library(3dgs_cpp STATIC
         ${SOURCE}
         ${EXTERNAL_SOURCE}
 )
 
-target_include_directories(vulkan_splatting
+target_include_directories(3dgs_cpp
         PUBLIC
-        ${CMAKE_SOURCE_DIR}/include/vulkan_splatting
+        ${CMAKE_SOURCE_DIR}/include/3dgs
         PRIVATE
         third_party
         ${Vulkan_INCLUDE_DIRS}
@@ -40,9 +40,9 @@ target_include_directories(vulkan_splatting
         ${CMAKE_BINARY_DIR}/shaders
 )
 
-add_dependencies(vulkan_splatting shaders)
+add_dependencies(3dgs_cpp shaders)
 
-target_link_libraries(vulkan_splatting PUBLIC Vulkan::Vulkan glfw spdlog::spdlog)
+target_link_libraries(3dgs_cpp PUBLIC Vulkan::Vulkan glfw spdlog::spdlog)
 if (UNIX)
-    target_link_libraries(vulkan_splatting PUBLIC ${CMAKE_DL_LIBS})
+    target_link_libraries(3dgs_cpp PUBLIC ${CMAKE_DL_LIBS})
 endif ()

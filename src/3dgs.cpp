@@ -1,4 +1,4 @@
-#include "VulkanSplatting.h"
+#include "3dgs.h"
 #include "Renderer.h"
 
 #ifdef VKGS_ENABLE_GLFW

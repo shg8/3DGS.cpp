@@ -2,7 +2,7 @@
 #include <iostream>
 #include <libenvpp/env.hpp>
 
-#include "VulkanSplatting.h"
+#include "3dgs.h"
 #include "args.hxx"
 #include "spdlog/spdlog.h"
 
