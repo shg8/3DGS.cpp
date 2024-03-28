@@ -64,7 +64,7 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
+        # echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
         echo "artifact-name=3dgs_cpp_viewer-${{ matrix.os }}-${{ matrix.arch }}-nightly" >> "$GITHUB_OUTPUT"
 
     - name: Set artifact path (Windows)
@@ -84,7 +84,7 @@ jobs:
     - name: Prepare Vulkan SDK
       uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:
-        vulkan-query-version: latest
+        vulkan-query-version: 1.3.275
         vulkan-components: Vulkan-Headers, Vulkan-Loader, Glslang, SPIRV-Tools
         vulkan-use-cache: true
 
@@ -93,7 +93,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DVULKAN_SDK=${{ steps.strings.outputs.vulkan-sdk-dir }}
+        # -DVULKAN_SDK=${{ steps.strings.outputs.vulkan-sdk-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
