@@ -14,15 +14,15 @@ with support for warp-level primitives (subgroups).
 ![3DGS.cpp Demo macOS](https://github.com/shg8/3DGS.cpp/assets/38004233/66542056-ce30-4998-a612-dd4f6792599e)
 
 ## Downloads
-* [Windows](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-windows-latest-amd64-nightly)
-* [macOS (arm64)](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-macos-14-arm64-nightly)
-* [Linux](https://github.com/shg8/3DGS.cpp/releases/download/nightly/vulkan_splatting_viewer-ubuntu-latest-amd64-nightly)
+* [Windows](https://github.com/shg8/3DGS.cpp/releases/download/nightly/3dgs_cpp_viewer-windows-latest-amd64-nightly)
+* [macOS (arm64)](https://github.com/shg8/3DGS.cpp/releases/download/nightly/3dgs_cpp_viewer-macos-14-arm64-nightly)
+* [Linux](https://github.com/shg8/3DGS.cpp/releases/download/nightly/3dgs_cpp_viewer-ubuntu-latest-amd64-nightly)
 * iOS, iPad OS, visionOS (as an iPad app) on [TestFlight](https://testflight.apple.com/join/0WzabeP7)
 
 ## Command Line Viewer
 
 ```
-  ./vulkan_splatting_viewer {OPTIONS} [scene]
+  ./3dgs_cpp_viewer {OPTIONS} [scene]
 
     Vulkan Splatting
 
