@@ -90,7 +90,7 @@
 		B0EA8AA72BA302E6003B92F7 /* QueryManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = QueryManager.cpp; sourceTree = "<group>"; };
 		B0EA8AA82BA302E6003B92F7 /* DescriptorSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DescriptorSet.h; sourceTree = "<group>"; };
 		B0EA8AA92BA302E6003B92F7 /* VulkanContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VulkanContext.cpp; sourceTree = "<group>"; };
-		B0EA8AC82BA3034B003B92F7 /* VulkanSplatting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VulkanSplatting.h; path = ../../../include/vulkan_splatting/VulkanSplatting.h; sourceTree = "<group>"; };
+		B0EA8AC82BA3034B003B92F7 /* 3dgs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = 3dgs.h; path = ../../../include/vulkan_splatting/3dgs.h; sourceTree = "<group>"; };
 		B0EA8ACB2BA30665003B92F7 /* shaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
 		B0EA8DC52BA30916003B92F7 /* MoltenVK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = MoltenVK.xcframework; path = ../MoltenVK/dynamic/MoltenVK.xcframework; sourceTree = "<group>"; };
 		B0EA900A2BA30CED003B92F7 /* vec4.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = vec4.hpp; sourceTree = "<group>"; };
@@ -594,7 +594,7 @@
 				B0608E4E2BA55BBB00CE9114 /* VulkanSplatting.cpp */,
 				B0EA924B2BA30EA2003B92F7 /* DummyGUIManager.cpp */,
 				B0EA8ACB2BA30665003B92F7 /* shaders.h */,
-				B0EA8AC82BA3034B003B92F7 /* VulkanSplatting.h */,
+				B0EA8AC82BA3034B003B92F7 /* 3dgs.h */,
 				B0EA8A772BA302E6003B92F7 /* GSScene.cpp */,
 				B0EA8A7A2BA302E6003B92F7 /* GSScene.h */,
 				B0EA8A792BA302E6003B92F7 /* GUIManager.h */,

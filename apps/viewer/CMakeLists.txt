@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.26)
-project(vulkan_splatting_viewer)
+project(3dgs_cpp_viewer)
 
-add_executable(vulkan_splatting_viewer main.cpp)
+add_executable(3dgs_cpp_viewer main.cpp)
 
-target_include_directories(vulkan_splatting_viewer PRIVATE third_party)
+target_include_directories(3dgs_cpp_viewer PRIVATE third_party)
 
-target_link_libraries(vulkan_splatting_viewer PRIVATE
+target_link_libraries(3dgs_cpp_viewer PRIVATE
     libenvpp::libenvpp
-    vulkan_splatting)
+    3dgs_cpp)

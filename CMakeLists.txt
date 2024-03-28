@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(vulkan_splatting_root)
+project(3dgs_cpp_root)
 
 include(FetchContent)
 
