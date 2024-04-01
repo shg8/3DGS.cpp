@@ -65,16 +65,16 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         # echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
-        echo "artifact-name=3dgs_cpp_viewer-${{ matrix.os }}-${{ matrix.arch }}-nightly" >> "$GITHUB_OUTPUT"
+        echo "artifact-name=3dgs_viewer-${{ matrix.os }}-${{ matrix.arch }}-nightly" >> "$GITHUB_OUTPUT"
 
     - name: Set artifact path (Windows)
       shell: bash
-      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/Release/3dgs_cpp_viewer.exe" >> "$GITHUB_ENV"
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/Release/3dgs_viewer.exe" >> "$GITHUB_ENV"
       if: runner.os == 'Windows'
 
     - name: Set artifact path (POSIX)
       shell: bash
-      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/3dgs_cpp_viewer" >> "$GITHUB_ENV"
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/3dgs_viewer" >> "$GITHUB_ENV"
       if: runner.os != 'Windows'
 
     - name: Install dependencies
