@@ -64,36 +64,34 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
-        echo "artifact-name=vulkan_splatting_viewer-${{ matrix.os }}-${{ matrix.arch }}-nightly" >> "$GITHUB_OUTPUT"
+        # echo "vulkan-sdk-dir=${{ github.workspace }}/VULKAN_SDK" >> "$GITHUB_OUTPUT"
+        echo "artifact-name=3dgs_cpp_viewer-${{ matrix.os }}-${{ matrix.arch }}-nightly" >> "$GITHUB_OUTPUT"
 
     - name: Set artifact path (Windows)
       shell: bash
-      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/Release/vulkan_splatting_viewer.exe" >> "$GITHUB_ENV"
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/Release/3dgs_cpp_viewer.exe" >> "$GITHUB_ENV"
       if: runner.os == 'Windows'
 
     - name: Set artifact path (POSIX)
       shell: bash
-      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/vulkan_splatting_viewer" >> "$GITHUB_ENV"
+      run: echo "ARTIFACT_PATH=${{ github.workspace }}/build/apps/viewer/3dgs_cpp_viewer" >> "$GITHUB_ENV"
       if: runner.os != 'Windows'
 
     - name: Install dependencies
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libglm-dev
 
-    - name: Prepare Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
+    - name: Install Vulkan SDK
+      uses: humbletim/install-vulkan-sdk@v1.1.1
       with:
-        vulkan-query-version: latest
-        vulkan-components: Vulkan-Headers, Vulkan-Loader, Glslang, SPIRV-Tools
-        vulkan-use-cache: true
+        version: latest
+        cache: true
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DVULKAN_SDK=${{ steps.strings.outputs.vulkan-sdk-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
