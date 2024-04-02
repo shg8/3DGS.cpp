@@ -4,7 +4,7 @@
 #include "spdlog/spdlog.h"
 #include <vk_enum_string_helper.h>
 
-Swapchain::Swapchain(const std::shared_ptr<VulkanContext>& context, const std::shared_ptr<Window>& window,
+Swapchain::Swapchain(const std::shared_ptr<VulkanContext>& context, const std::shared_ptr<RenderingTarget>& window,
                      bool immediate) : context(context), window(window), immediate(immediate) {
     createSwapchain();
     createSwapchainImages();

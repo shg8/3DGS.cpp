@@ -4,10 +4,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
-#include "windowing/GLFWWindow.h"
+#include "targets/GLFWWindow.h"
 
 ImguiManager::ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain,
-                           std::shared_ptr<Window> window) : context(context), swapchain(swapchain), window(window) {
+                           std::shared_ptr<RenderingTarget> window) : context(context), swapchain(swapchain), window(window) {
 }
 
 void ImguiManager::createCommandPool() {

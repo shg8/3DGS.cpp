@@ -6,7 +6,8 @@
 #include "args.hxx"
 #include "spdlog/spdlog.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");
 
     args::ArgumentParser parser("Vulkan Splatting");
@@ -24,20 +25,25 @@ int main(int argc, char** argv) {
     };
     args::ValueFlag<uint32_t> widthFlag{parser, "width", "Set window width", {'w', "width"}};
     args::ValueFlag<uint32_t> heightFlag{parser, "height", "Set window height", {'h', "height"}};
-    args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", { "no-gui"}};
+    args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", {"no-gui"}};
     args::Positional<std::string> scenePath{parser, "scene", "Path to scene file", "scene.ply"};
 
-    try {
+    try
+    {
         parser.ParseCLI(argc, argv);
-    } catch (const args::Completion& e) {
+    }
+    catch (const args::Completion& e)
+    {
         std::cout << e.what();
         return 0;
     }
-    catch (const args::Help&) {
+    catch (const args::Help&)
+    {
         std::cout << parser;
         return 0;
     }
-    catch (const args::ParseError& e) {
+    catch (const args::ParseError& e)
+    {
         std::cout << e.what() << std::endl;
         std::cout << parser;
         return 1;
@@ -49,7 +55,8 @@ int main(int argc, char** argv) {
     auto immediateSwapchain = pre.register_variable<bool>("IMMEDIATE_SWAPCHAIN");
     auto envVars = pre.parse_and_validate();
 
-    if (args::get(verboseFlag)) {
+    if (args::get(verboseFlag))
+    {
         spdlog::set_level(spdlog::level::debug);
     }
 
@@ -63,33 +70,40 @@ int main(int argc, char** argv) {
     };
 
     // check that the scene file exists
-    if (!std::filesystem::exists(config.scene)) {
+    if (!std::filesystem::exists(config.scene))
+    {
         spdlog::critical("File does not exist: {}", config.scene);
         return 0;
     }
 
-    if (validationLayersFlag) {
+    if (validationLayersFlag)
+    {
         config.enableVulkanValidationLayers = args::get(validationLayersFlag);
     }
 
-    if (physicalDeviceIdFlag) {
+    if (physicalDeviceIdFlag)
+    {
         config.physicalDeviceId = std::make_optional<uint8_t>(args::get(physicalDeviceIdFlag));
     }
 
-    if (immediateSwapchainFlag) {
+    if (immediateSwapchainFlag)
+    {
         config.immediateSwapchain = args::get(immediateSwapchainFlag);
     }
 
-    if (noGuiFlag) {
+    if (noGuiFlag)
+    {
         config.enableGui = false;
-    } else {
+    }
+    else
+    {
         config.enableGui = true;
     }
 
     auto width = widthFlag ? args::get(widthFlag) : 1280;
     auto height = heightFlag ? args::get(heightFlag) : 720;
 
-    config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
+    config.renderingTarget = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
 
 #ifndef DEBUG
     try {

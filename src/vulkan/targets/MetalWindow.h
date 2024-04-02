@@ -1,9 +1,9 @@
 #ifndef METALWINDOW_H
 #define METALWINDOW_H
-#include "../Window.h"
+#include "../RenderingTarget.h"
 #include "../VulkanContext.h"
 
-class MetalWindow final : public Window {
+class MetalWindow final : public RenderingTarget {
 public:
     MetalWindow(void *caMetalLayer, int width, int height);
 

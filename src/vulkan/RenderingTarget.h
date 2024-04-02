@@ -7,7 +7,7 @@
 
 #include "VulkanContext.h"
 
-class Window {
+class RenderingTarget {
 public:
     virtual VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) = 0;
 
@@ -29,7 +29,11 @@ public:
 
     virtual void logMovement(float x, float y) { };
 
-    virtual ~Window() = default;
+    virtual std::optional<vk::PhysicalDevice> requirePhysicalDevice() {
+        return std::nullopt;
+    }
+
+    virtual ~RenderingTarget() = default;
 
 };
 

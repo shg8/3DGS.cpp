@@ -4,11 +4,11 @@
 
 #include <memory>
 #include "VulkanContext.h"
-#include "Window.h"
+#include "RenderingTarget.h"
 
 class Swapchain {
 public:
-    Swapchain(const std::shared_ptr<VulkanContext> &context, const std::shared_ptr<Window> &window, bool immediate);
+    Swapchain(const std::shared_ptr<VulkanContext> &context, const std::shared_ptr<RenderingTarget> &window, bool immediate);
 
     vk::UniqueSwapchainKHR swapchain;
     vk::Extent2D swapchainExtent;
@@ -22,7 +22,7 @@ public:
     void recreate();
 private:
     std::shared_ptr<VulkanContext> context;
-    std::shared_ptr<Window> window;
+    std::shared_ptr<RenderingTarget> window;
 
     bool immediate = false;
 

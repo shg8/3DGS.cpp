@@ -53,7 +53,7 @@
 		B0608E432BA54D8E00CE9114 /* DummyImguiManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DummyImguiManager.cpp; path = VulkanSplatting/DummyImguiManager.cpp; sourceTree = SOURCE_ROOT; };
 		B0608E472BA5522500CE9114 /* MetalWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MetalWindow.cpp; sourceTree = "<group>"; };
 		B0608E482BA5522500CE9114 /* MetalWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetalWindow.h; sourceTree = "<group>"; };
-		B0608E4D2BA5557A00CE9114 /* Window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Window.h; sourceTree = "<group>"; };
+		B0608E4D2BA5557A00CE9114 /* RenderingTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RenderingTarget.h; sourceTree = "<group>"; };
 		B0608E4E2BA55BBB00CE9114 /* VulkanSplatting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VulkanSplatting.cpp; path = ../../../src/VulkanSplatting.cpp; sourceTree = "<group>"; };
 		B0A860112BA56169008B0F4F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B0B7FB3C2BA7856600DA3A53 /* project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = project.xcconfig; sourceTree = "<group>"; };
@@ -620,7 +620,7 @@
 		B0EA8A922BA302E6003B92F7 /* vulkan */ = {
 			isa = PBXGroup;
 			children = (
-				B0608E4D2BA5557A00CE9114 /* Window.h */,
+				B0608E4D2BA5557A00CE9114 /* RenderingTarget.h */,
 				B0608E492BA5522500CE9114 /* windowing */,
 				B0608E432BA54D8E00CE9114 /* DummyImguiManager.cpp */,
 				B0EA8A932BA302E6003B92F7 /* Utils.h */,

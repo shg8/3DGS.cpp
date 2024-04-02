@@ -6,7 +6,7 @@
 #include <atomic>
 #include "3dgs.h"
 
-#include "vulkan/Window.h"
+#include "vulkan/RenderingTarget.h"
 #include "GSScene.h"
 #include "vulkan/pipelines/ComputePipeline.h"
 #include "vulkan/Swapchain.h"
@@ -86,7 +86,7 @@ public:
 
 private:
     VulkanSplatting::RendererConfiguration configuration;
-    std::shared_ptr<Window> window;
+    std::shared_ptr<RenderingTarget> window;
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<ImguiManager> imguiManager;
     std::shared_ptr<GSScene> scene;

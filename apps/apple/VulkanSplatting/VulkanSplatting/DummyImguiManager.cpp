@@ -1,7 +1,7 @@
 #include "ImguiManager.h"
 
 ImguiManager::ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain,
-                           std::shared_ptr<Window> window) {
+                           std::shared_ptr<RenderingTarget> window) {
 }
 
 void ImguiManager::createCommandPool() {

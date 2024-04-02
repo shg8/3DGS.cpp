@@ -118,13 +118,18 @@ void Renderer::recreateSwapchain() {
 
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
-    window = configuration.window;
+    window = configuration.renderingTarget;
     context = std::make_shared<VulkanContext>(window->getRequiredInstanceExtensions(), std::vector<std::string>{},
                                               configuration.enableVulkanValidationLayers);
 
     context->createInstance();
     auto surface = static_cast<vk::SurfaceKHR>(window->createSurface(context));
-    context->selectPhysicalDevice(configuration.physicalDeviceId, surface);
+    auto requiredPhysicalDevice = window->requirePhysicalDevice();
+    if (!requiredPhysicalDevice.has_value()) {
+        context->selectPhysicalDevice(configuration.physicalDeviceId, surface);
+    } else {
+        context->physicalDevice = requiredPhysicalDevice.value();
+    }
 
     vk::PhysicalDeviceFeatures pdf{};
     vk::PhysicalDeviceVulkan11Features pdf11{};

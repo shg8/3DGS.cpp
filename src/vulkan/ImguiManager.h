@@ -5,11 +5,11 @@
 
 #include "VulkanContext.h"
 #include "Swapchain.h"
-#include "Window.h"
+#include "RenderingTarget.h"
 
 class ImguiManager {
 public:
-    ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain, std::shared_ptr<Window> window);
+    ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain, std::shared_ptr<RenderingTarget> window);
 
     void createCommandPool();
 
@@ -25,7 +25,7 @@ public:
 private:
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<Swapchain> swapchain;
-    std::shared_ptr<Window> window;
+    std::shared_ptr<RenderingTarget> window;
     vk::UniqueCommandPool commandPool;
     vk::UniqueCommandBuffer commandBuffer;
     vk::UniqueFence fence;
