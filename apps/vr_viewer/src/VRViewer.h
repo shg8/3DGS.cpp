@@ -1,6 +1,7 @@
 #ifndef OPENXRVIEWER_H
 #define OPENXRVIEWER_H
 #include <args.hxx>
+#include <barrier>
 #include <memory>
 #include <utility>
 
@@ -25,6 +26,8 @@ public:
     VRViewer & operator=(VRViewer &&other) = delete;
 
     void run();
+
+    void finishSetup(void *vkInstance, void *vkPhysicalDevice, void *vkDevice, uint32_t vkQueueFamilyIndex, uint32_t vkQueueIndex);
 
 private:
     Configuration config;

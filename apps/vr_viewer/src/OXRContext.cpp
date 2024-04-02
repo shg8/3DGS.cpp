@@ -10,10 +10,6 @@
 #include "spdlog/spdlog.h"
 
 void OXRContext::setup() {
-    setupOXR();
-}
-
-void OXRContext::setupOXR() {
     bool vulkanSupported = OXR::isExtensionSupported(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
     if (!vulkanSupported) {
         throw std::runtime_error("Vulkan not supported");
@@ -22,8 +18,8 @@ void OXRContext::setupOXR() {
     createInstance();
     createSystem();
     setupViews();
-    getRequiredVulkanInstanceExtensions();
-    getRequiredVulkanDeviceExtensions();
+    std::ignore = getRequiredVulkanInstanceExtensions();
+    std::ignore = getRequiredVulkanDeviceExtensions();
 }
 
 void OXRContext::createInstance() {
@@ -179,4 +175,47 @@ void * OXRContext::getPhysicalDevice(void *instance) const {
     }
 
     return physicalDevice;
+}
+
+void OXRContext::createSession(void *vkInstance, void *vkPhysicalDevice, void *vkDevice, uint32_t vkQueueFamilyIndex,
+    uint32_t vkQueueIndex) {
+    XrGraphicsBindingVulkanKHR graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR};
+    graphicsBinding.instance = static_cast<VkInstance>(vkInstance);
+    graphicsBinding.physicalDevice = static_cast<VkPhysicalDevice>(vkPhysicalDevice);
+    graphicsBinding.device = static_cast<VkDevice>(vkDevice);
+    graphicsBinding.queueFamilyIndex = vkQueueFamilyIndex;
+    graphicsBinding.queueIndex = vkQueueIndex;
+
+    XrSessionCreateInfo createInfo = {XR_TYPE_SESSION_CREATE_INFO};
+    createInfo.next = &graphicsBinding;
+    createInfo.systemId = systemId;
+
+    auto result = xrCreateSession(oxrInstance, &createInfo, &oxrSession);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to create OpenXR session");
+    }
+
+    spdlog::debug("Created OpenXR session");
+}
+
+void OXRContext::createReferenceSpace() {
+    XrPosef identityPose = {{0, 0, 0, 1}, {0, 0, 0}};
+    XrReferenceSpaceCreateInfo createInfo = {XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
+    createInfo.poseInReferenceSpace = identityPose;
+    createInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+
+    auto result = xrCreateReferenceSpace(oxrSession, &createInfo, &localSpace);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to create OpenXR reference space");
+    }
+}
+
+void OXRContext::beginSession() {
+    XrSessionBeginInfo beginInfo = {XR_TYPE_SESSION_BEGIN_INFO};
+    beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+
+    auto result = xrBeginSession(oxrSession, &beginInfo);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to begin OpenXR session");
+    }
 }

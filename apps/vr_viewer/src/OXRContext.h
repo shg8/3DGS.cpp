@@ -11,12 +11,20 @@ class OXRContext {
 public:
     void setup();
     void* getPhysicalDevice(void *instance) const;
-private:
-    XrInstance oxrInstance;
-    XrSystemId systemId;
-    XrViewConfigurationView views[2] = {{XR_TYPE_VIEW_CONFIGURATION_VIEW}, {XR_TYPE_VIEW_CONFIGURATION_VIEW}};
 
-    void setupOXR();
+    void createSession(void *vkInstance, void *vkPhysicalDevice, void *vkDevice, uint32_t vkQueueFamilyIndex,
+    uint32_t vkQueueIndex);
+
+    void createReferenceSpace();
+
+    void beginSession();
+
+private:
+    XrInstance oxrInstance = XR_NULL_HANDLE;
+    XrSystemId systemId = XR_NULL_SYSTEM_ID;
+    XrViewConfigurationView views[2] = {{XR_TYPE_VIEW_CONFIGURATION_VIEW}, {XR_TYPE_VIEW_CONFIGURATION_VIEW}};
+    XrSession oxrSession = XR_NULL_HANDLE;
+    XrSpace localSpace = XR_NULL_HANDLE;
 
     void createInstance();
 
