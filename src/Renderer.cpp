@@ -93,7 +93,7 @@ void Renderer::retrieveTimestamps() {
     }
 
     auto metrics = queryManager->parseResults(timestamps);
-    for (auto& metric: metrics) {
+    for (auto &metric: metrics) {
         if (configuration.enableGui)
             guiManager.pushMetric(metric.first, metric.second / 1000000.0);
     }
@@ -124,8 +124,8 @@ void Renderer::initializeVulkan() {
 
     context->createInstance();
     auto surface = static_cast<vk::SurfaceKHR>(window->createSurface(context));
-    auto requiredPhysicalDevice = window->requirePhysicalDevice();
-    if (!requiredPhysicalDevice.has_value()) {
+    if (auto requiredPhysicalDevice = window->requirePhysicalDevice(context->instance.get());
+        !requiredPhysicalDevice.has_value()) {
         context->selectPhysicalDevice(configuration.physicalDeviceId, surface);
     } else {
         context->physicalDevice = requiredPhysicalDevice.value();
@@ -357,7 +357,7 @@ void Renderer::createRenderPipeline() {
     inputSet->build();
 
     auto outputSet = std::make_shared<DescriptorSet>(context, 1);
-    for (auto& image: swapchain->swapchainImages) {
+    for (auto &image: swapchain->swapchainImages) {
         outputSet->bindImageToDescriptorSet(0, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute,
                                             image);
     }
@@ -418,7 +418,7 @@ startOfRenderLoop:
 
     try {
         ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
-    } catch (vk::OutOfDateKHRError& e) {
+    } catch (vk::OutOfDateKHRError &e) {
         recreateSwapchain();
         return;
     }
@@ -528,7 +528,7 @@ void Renderer::recordPreprocessCommandBuffer() {
     }
 
     preprocessCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
-                                        queryManager->registerQuery("prefix_sum_end"));
+                                            queryManager->registerQuery("prefix_sum_end"));
 
     preprocessCommandBuffer->end();
 }
@@ -583,23 +583,23 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     auto numGroups = (scene->getNumVertices() + 255) / 256;
     preprocessSortPipeline->bind(renderCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
-                                            queryManager->registerQuery("preprocess_sort_start"));
+                                        queryManager->registerQuery("preprocess_sort_start"));
     uint32_t tileX = (swapchain->swapchainExtent.width + 16 - 1) / 16;
     // assert(tileX == 50);
     renderCommandBuffer->pushConstants(preprocessSortPipeline->pipelineLayout.get(),
-                                           vk::ShaderStageFlagBits::eCompute, 0,
-                                           sizeof(uint32_t), &tileX);
+                                       vk::ShaderStageFlagBits::eCompute, 0,
+                                       sizeof(uint32_t), &tileX);
     renderCommandBuffer->dispatch(numGroups, 1, 1);
 
     sortKBufferEven->computeWriteReadBarrier(renderCommandBuffer.get());
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
-                                            queryManager->registerQuery("preprocess_sort_end"));
+                                        queryManager->registerQuery("preprocess_sort_end"));
 
     // std::cout << "Num instances: " << numInstances << std::endl;
 
     assert(numInstances <= scene->getNumVertices() * sortBufferSizeMultiplier);
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
-                                                queryManager->registerQuery("sort_start"));
+                                        queryManager->registerQuery("sort_start"));
     for (auto i = 0; i < 8; i++) {
         sortHistPipeline->bind(renderCommandBuffer, 0, i % 2 == 0 ? 0 : 1);
         auto invocationSize = (numInstances + numRadixSortBlocksPerWorkgroup - 1) / numRadixSortBlocksPerWorkgroup;
@@ -633,7 +633,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
         }
     }
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
-                                                queryManager->registerQuery("sort_end"));
+                                        queryManager->registerQuery("sort_end"));
 
     renderCommandBuffer->fillBuffer(tileBoundaryBuffer->buffer, 0, VK_WHOLE_SIZE, 0);
 

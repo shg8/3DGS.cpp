@@ -29,7 +29,7 @@ public:
 
     virtual void logMovement(float x, float y) { };
 
-    virtual std::optional<vk::PhysicalDevice> requirePhysicalDevice() {
+    virtual std::optional<vk::PhysicalDevice> requirePhysicalDevice(vk::Instance instance) {
         return std::nullopt;
     }
 

@@ -17,9 +17,7 @@ std::shared_ptr<RenderingTarget> VulkanSplatting::createMetalWindow(void *caMeta
 #endif
 
 std::shared_ptr<RenderingTarget> VulkanSplatting::createOpenXRRenderingTarget(OpenXRConfiguration configuration) {
-    auto target = std::make_shared<OpenXRStereo>();
-    target->instanceExtensions = configuration.instanceExtensions;
-    target->deviceExtensions = configuration.deviceExtensions;
+    auto target = std::make_shared<OpenXRStereo>(configuration);
     return target;
 }
 

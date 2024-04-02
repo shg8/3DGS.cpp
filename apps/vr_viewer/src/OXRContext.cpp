@@ -164,3 +164,19 @@ std::vector<std::string> OXRContext::getRequiredVulkanDeviceExtensions() const {
 
     return extensionList;
 }
+
+void * OXRContext::getPhysicalDevice(void *instance) const {
+    PFN_xrGetVulkanGraphicsDeviceKHR xrGetVulkanGraphicsDeviceKHR;
+    auto result = xrGetInstanceProcAddr(oxrInstance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsDeviceKHR));
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to get xrGetVulkanGraphicsDeviceKHR");
+    }
+
+    VkPhysicalDevice physicalDevice;
+    result = xrGetVulkanGraphicsDeviceKHR(oxrInstance, systemId, static_cast<VkInstance>(instance), &physicalDevice);
+    if (XR_FAILED(result)) {
+        throw std::runtime_error("Failed to get Vulkan graphics device");
+    }
+
+    return physicalDevice;
+}

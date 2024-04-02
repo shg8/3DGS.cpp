@@ -36,3 +36,8 @@ void OpenXRStereo::logTranslation(float x, float y) {
 void OpenXRStereo::logMovement(float x, float y) {
     RenderingTarget::logMovement(x, y);
 }
+
+std::optional<vk::PhysicalDevice> OpenXRStereo::requirePhysicalDevice(vk::Instance instance) {
+    void *pdPtr = configuration.getPhysicalDevice(instance);
+    return {static_cast<vk::PhysicalDevice>(static_cast<VkPhysicalDevice>(pdPtr))};
+}

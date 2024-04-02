@@ -1,5 +1,6 @@
 #ifndef OPENXRSTEREO_H
 #define OPENXRSTEREO_H
+#include <3dgs.h>
 #include <string>
 #include <vector>
 
@@ -7,6 +8,10 @@
 
 class OpenXRStereo : public RenderingTarget {
 public:
+    explicit OpenXRStereo(const VulkanSplatting::OpenXRConfiguration &configuration)
+        : configuration(configuration) {
+    }
+
     VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) override;
 
     std::array<bool, 3> getMouseButton() override;
@@ -27,8 +32,10 @@ public:
 
     void logMovement(float x, float y) override;
 
-    std::vector<std::string> instanceExtensions;
-    std::vector<std::string> deviceExtensions;
+    std::optional<vk::PhysicalDevice> requirePhysicalDevice(vk::Instance instance) override;
+
+private:
+    VulkanSplatting::OpenXRConfiguration configuration;
 };
 
 

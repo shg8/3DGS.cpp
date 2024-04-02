@@ -2,13 +2,15 @@
 #ifndef OXRCONTEXT_H
 #define OXRCONTEXT_H
 #include <openxr/openxr.h>
+#include <vulkan/vulkan.hpp>
+
 #include "OXRUtils.h"
 
 
 class OXRContext {
 public:
     void setup();
-
+    void* getPhysicalDevice(void *instance) const;
 private:
     XrInstance oxrInstance;
     XrSystemId systemId;

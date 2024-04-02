@@ -1,6 +1,7 @@
 #ifndef VULKANSPLATTING_H
 #define VULKANSPLATTING_H
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <memory>
@@ -39,6 +40,8 @@ public:
     struct OpenXRConfiguration {
         std::vector<std::string> instanceExtensions;
         std::vector<std::string> deviceExtensions;
+
+        std::function<void*(void*)> getPhysicalDevice;
     };
     static std::shared_ptr<RenderingTarget> createOpenXRRenderingTarget(OpenXRConfiguration configuration);
 #endif
