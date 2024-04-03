@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-class RenderingTarget;
+class RenderTarget;
 class Renderer;
 
 class VulkanSplatting {
@@ -23,17 +23,17 @@ public:
         float far = 1000.0f;
         bool enableGui = false;
 
-        std::shared_ptr<RenderingTarget> renderingTarget;
+        std::shared_ptr<RenderTarget> renderingTarget;
     };
 
     explicit VulkanSplatting(RendererConfiguration configuration) : configuration(configuration) {}
 
 #ifdef VKGS_ENABLE_GLFW
-    static std::shared_ptr<RenderingTarget> createGlfwWindow(std::string name, int width, int height);
+    static std::shared_ptr<RenderTarget> createGlfwWindow(std::string name, int width, int height);
 #endif
 
 #ifdef VKGS_ENABLE_METAL
-    static std::shared_ptr<RenderingTarget> createMetalWindow(void *caMetalLayer, int width, int height);
+    static std::shared_ptr<RenderTarget> createMetalWindow(void *caMetalLayer, int width, int height);
 #endif
 
 #ifdef VKGS_ENABLE_OPENXR
@@ -44,7 +44,7 @@ public:
         std::function<void*(void*)> getPhysicalDevice;
         std::function<void(void*, void*, void*, uint32_t, uint32_t)> postVulkanInit;
     };
-    static std::shared_ptr<RenderingTarget> createOpenXRRenderingTarget(OpenXRConfiguration configuration);
+    static std::shared_ptr<RenderTarget> createOpenXRRenderTarget(OpenXRConfiguration configuration);
 #endif
 
     void start();

@@ -132,7 +132,7 @@ namespace OXR {
 
     void Layer::createProjectionViews(std::shared_ptr<OXRContext> context, uint64_t flags) {
         for (int i = 0; i < 2; i++) {
-            views[i].pose = {.position = { 0.0f, 0.0f, 0.0f }, .orientation = { 0.0f, 0.0f, 0.0f, 1.0f }};
+            views[i].pose = {.orientation = { 0.0f, 0.0f, 0.0f, 1.0f }, .position = { 0.0f, 0.0f, 0.0f }};
             views[i].subImage.swapchain = swapchains[i];
             views[i].subImage.imageRect.offset = {0, 0};
             views[i].subImage.imageRect.extent = {static_cast<int32_t>(context->views[i].recommendedImageRectWidth),

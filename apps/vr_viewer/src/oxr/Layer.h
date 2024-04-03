@@ -3,10 +3,9 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <openxr/openxr.h>
-#include <openxr/openxr_platform.h>
 
 #include "OXRContext.h"
+#include <openxr/openxr_platform.h>
 
 namespace OXR {
 

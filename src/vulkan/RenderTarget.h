@@ -7,7 +7,7 @@
 
 #include "VulkanContext.h"
 
-class RenderingTarget {
+class RenderTarget {
 public:
     virtual VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) = 0;
 
@@ -34,7 +34,7 @@ public:
         return std::nullopt;
     }
 
-    virtual ~RenderingTarget() = default;
+    virtual ~RenderTarget() = default;
 
 };
 

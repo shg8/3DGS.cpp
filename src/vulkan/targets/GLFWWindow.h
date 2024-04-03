@@ -1,9 +1,9 @@
 #ifndef GLFWWINDOW_H
 #define GLFWWINDOW_H
 
-#include "../RenderingTarget.h"
+#include "../RenderTarget.h"
 
-class GLFWWindow final : public RenderingTarget {
+class GLFWWindow final : public RenderTarget {
 public:
     GLFWWindow(std::string name, int width, int height);
 

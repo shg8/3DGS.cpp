@@ -6,7 +6,7 @@
 #include <atomic>
 #include "3dgs.h"
 
-#include "vulkan/RenderingTarget.h"
+#include "vulkan/RenderTarget.h"
 #include "GSScene.h"
 #include "vulkan/pipelines/ComputePipeline.h"
 #include "vulkan/Swapchain.h"
@@ -66,7 +66,7 @@ public:
 
     void retrieveTimestamps();
 
-    void recreateSwapchain();
+    void recreatePipelines();
 
     void draw();
 
@@ -86,7 +86,7 @@ public:
 
 private:
     VulkanSplatting::RendererConfiguration configuration;
-    std::shared_ptr<RenderingTarget> window;
+    std::shared_ptr<RenderTarget> window;
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<ImguiManager> imguiManager;
     std::shared_ptr<GSScene> scene;

@@ -4,31 +4,42 @@
 
 #include <memory>
 #include "VulkanContext.h"
-#include "RenderingTarget.h"
+#include "RenderTarget.h"
 
 class Swapchain {
 public:
-    Swapchain(const std::shared_ptr<VulkanContext> &context, const std::shared_ptr<RenderingTarget> &window, bool immediate);
+    Swapchain(const std::shared_ptr<VulkanContext> &context, const std::shared_ptr<RenderTarget> &window, bool immediate);
 
-    vk::UniqueSwapchainKHR swapchain;
-    vk::Extent2D swapchainExtent;
+    [[nodiscard]] virtual vk::Extent2D currentExtent() const {
+        return swapchainExtent;
+    }
+
+    std::pair<std::optional<uint32_t>, bool> acquireNextImage();
+
+    bool present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t uint32);
+
     std::vector<std::shared_ptr<Image>> swapchainImages;
     std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
-    vk::SurfaceFormatKHR surfaceFormat;
     vk::Format swapchainFormat;
-    vk::PresentModeKHR presentMode;
     uint32_t imageCount;
 
-    void recreate();
 private:
     std::shared_ptr<VulkanContext> context;
-    std::shared_ptr<RenderingTarget> window;
+    std::shared_ptr<RenderTarget> window;
+
+    vk::UniqueSwapchainKHR swapchain;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::Extent2D swapchainExtent;
+    vk::PresentModeKHR presentMode;
 
     bool immediate = false;
 
     void createSwapchain();
 
     void createSwapchainImages();
+
+    bool recreateSwapchain();
+
 };
 
 

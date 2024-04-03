@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "../RenderingTarget.h"
+#include "../RenderTarget.h"
 
-class OpenXRStereo : public RenderingTarget {
+class OpenXRStereo : public RenderTarget {
 public:
     explicit OpenXRStereo(const VulkanSplatting::OpenXRConfiguration &configuration)
         : configuration(configuration) {

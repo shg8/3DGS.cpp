@@ -3,7 +3,7 @@
 #include <memory>
 #include <openxr/openxr_platform.h>
 
-#include "OXRContext.h"
+#include "oxr/OXRContext.h"
 #include "3dgs.h"
 #include "spdlog/spdlog.h"
 
@@ -20,7 +20,7 @@ void VRViewer::run() {
     configuration.postVulkanInit = std::bind(&VRViewer::finishSetup, this, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
 
-    auto renderingTarget = VulkanSplatting::createOpenXRRenderingTarget(configuration);
+    auto renderingTarget = VulkanSplatting::createOpenXRRenderTarget(configuration);
 }
 
 void VRViewer::finishSetup(void *vkInstance, void *vkPhysicalDevice, void *vkDevice, uint32_t vkQueueFamilyIndex,

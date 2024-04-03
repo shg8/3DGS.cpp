@@ -101,21 +101,15 @@ void Renderer::retrieveTimestamps() {
     }
 }
 
-void Renderer::recreateSwapchain() {
-    auto oldExtent = swapchain->swapchainExtent;
-    spdlog::debug("Recreating swapchain");
-    swapchain->recreate();
-    if (swapchain->swapchainExtent == oldExtent) {
-        return;
-    }
-
-    auto [width, height] = swapchain->swapchainExtent;
+void Renderer::recreatePipelines() {
+    auto [width, height] = swapchain->currentExtent();
     auto tileX = (width + 16 - 1) / 16;
     auto tileY = (height + 16 - 1) / 16;
     tileBoundaryBuffer->realloc(tileX * tileY * sizeof(uint32_t) * 2);
 
     recordPreprocessCommandBuffer();
     createRenderPipeline();
+    return;
 }
 
 void Renderer::initializeVulkan() {
@@ -328,7 +322,7 @@ void Renderer::createPreprocessSortPipeline() {
 
 void Renderer::createTileBoundaryPipeline() {
     spdlog::debug("Creating tile boundary pipeline");
-    auto [width, height] = swapchain->swapchainExtent;
+    auto [width, height] = swapchain->currentExtent();
     auto tileX = (width + 16 - 1) / 16;
     auto tileY = (height + 16 - 1) / 16;
     tileBoundaryBuffer = Buffer::storage(context, tileX * tileY * sizeof(uint32_t) * 2, false);
@@ -383,14 +377,15 @@ void Renderer::draw() {
     }
     context->device->resetFences(inflightFences[0].get());
 
-    auto res = context->device->acquireNextImageKHR(swapchain->swapchain.get(), UINT64_MAX,
-                                                    swapchain->imageAvailableSemaphores[0].get(),
-                                                    nullptr, &currentImageIndex);
-    if (res == vk::Result::eErrorOutOfDateKHR) {
-        recreateSwapchain();
+    auto [optionalImageIndex, extentChanged] = swapchain->acquireNextImage();
+    if (extentChanged) {
+        recreatePipelines();
+    }
+
+    if (!optionalImageIndex.has_value()) {
         return;
-    } else if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
-        throw std::runtime_error("Failed to acquire swapchain image");
+    } else {
+        currentImageIndex = optionalImageIndex.value();
     }
 
 startOfRenderLoop:
@@ -417,24 +412,10 @@ startOfRenderLoop:
             .setWaitDstStageMask(waitStage);
     context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
 
-    vk::PresentInfoKHR presentInfo{};
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &renderFinishedSemaphores[0].get();
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &swapchain->swapchain.get();
-    presentInfo.pImageIndices = &currentImageIndex;
+    extentChanged = swapchain->present(std::vector<vk::Semaphore>{renderFinishedSemaphores[0].get()}, currentImageIndex);
 
-    try {
-        ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
-    } catch (vk::OutOfDateKHRError &e) {
-        recreateSwapchain();
-        return;
-    }
-
-    if (ret == vk::Result::eErrorOutOfDateKHR || ret == vk::Result::eSuboptimalKHR) {
-        recreateSwapchain();
-    } else if (ret != vk::Result::eSuccess) {
-        throw std::runtime_error("Failed to present swapchain image");
+    if (extentChanged) {
+        recreatePipelines();
     }
 }
 
@@ -592,7 +573,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     preprocessSortPipeline->bind(renderCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("preprocess_sort_start"));
-    uint32_t tileX = (swapchain->swapchainExtent.width + 16 - 1) / 16;
+    uint32_t tileX = (swapchain->currentExtent().width + 16 - 1) / 16;
     // assert(tileX == 50);
     renderCommandBuffer->pushConstants(preprocessSortPipeline->pipelineLayout.get(),
                                        vk::ShaderStageFlagBits::eCompute, 0,
@@ -667,7 +648,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     renderPipeline->bind(renderCommandBuffer, 0, std::vector<uint32_t>{0, currentImageIndex});
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("render_start"));
-    auto [width, height] = swapchain->swapchainExtent;
+    auto [width, height] = swapchain->currentExtent();
     uint32_t constants[2] = {width, height};
     renderCommandBuffer->pushConstants(renderPipeline->pipelineLayout.get(),
                                        vk::ShaderStageFlagBits::eCompute, 0,
@@ -731,7 +712,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
 void Renderer::updateUniforms() {
     UniformBuffer data{};
-    auto [width, height] = swapchain->swapchainExtent;
+    auto [width, height] = swapchain->currentExtent();
     data.width = width;
     data.height = height;
     data.camera_position = glm::vec4(camera.position, 1.0f);

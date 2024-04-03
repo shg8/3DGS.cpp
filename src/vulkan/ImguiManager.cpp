@@ -7,7 +7,7 @@
 #include "targets/GLFWWindow.h"
 
 ImguiManager::ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain,
-                           std::shared_ptr<RenderingTarget> window) : context(context), swapchain(swapchain), window(window) {
+                           std::shared_ptr<RenderTarget> window) : context(context), swapchain(swapchain), window(window) {
 }
 
 void ImguiManager::createCommandPool() {
@@ -171,7 +171,7 @@ void ImguiManager::draw(vk::CommandBuffer commandBuffer, uint32_t currentImageIn
     vk::RenderingAttachmentInfoKHR attachment_info{
         swapchain->swapchainImages[currentImageIndex]->imageView.get(), vk::ImageLayout::eColorAttachmentOptimal
     };
-    vk::RenderingInfoKHR rendering_info{{}, vk::Rect2D{{0, 0}, swapchain->swapchainExtent}, 1, {}, 1, &attachment_info};
+    vk::RenderingInfoKHR rendering_info{{}, vk::Rect2D{{0, 0}, swapchain->currentExtent()}, 1, {}, 1, &attachment_info};
     commandBuffer.beginRenderingKHR(rendering_info);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
     commandBuffer.endRenderingKHR();
