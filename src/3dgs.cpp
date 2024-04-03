@@ -4,8 +4,17 @@
 
 #ifdef VKGS_ENABLE_GLFW
 #include "vulkan/targets/GLFWWindow.h"
-std::shared_ptr<RenderTarget> VulkanSplatting::createGlfwWindow(std::string name, int width, int height) {
-    return std::make_shared<GLFWWindow>(name, width, height);
+
+VulkanSplatting::VulkanSplatting(RendererConfiguration configuration,
+                                 std::shared_ptr<RenderTarget> renderTarget) : configuration(configuration),
+                                                                               renderTarget(renderTarget),
+                                                                               renderer(std::make_shared<Renderer>(
+                                                                                   configuration, renderTarget)) {
+
+}
+
+std::shared_ptr<RenderTarget> VulkanSplatting::createGlfwWindow(std::string name, int width, int height, bool immediate) {
+    return std::make_shared<GLFWWindow>(name, width, height, immediate);
 }
 #endif
 
@@ -23,13 +32,11 @@ std::shared_ptr<RenderTarget> VulkanSplatting::createOpenXRRenderTarget(OpenXRCo
 
 void VulkanSplatting::start() {
     // Create the renderer
-    renderer = std::make_shared<Renderer>(configuration);
     renderer->initialize();
     renderer->run();
 }
 
 void VulkanSplatting::initialize() {
-    renderer = std::make_shared<Renderer>(configuration);
     renderer->initialize();
 }
 
@@ -38,7 +45,8 @@ void VulkanSplatting::draw() {
 }
 
 void VulkanSplatting::logTranslation(float x, float y) {
-    configuration.renderingTarget->logTranslation(x, y);
+    if (auto rt = renderTarget.lock())
+        rt->logTranslation(x, y);
 }
 
 void VulkanSplatting::logMovement(float x, float y, float z) {

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../RenderTarget.h"
+#include "../Swapchain.h"
 
 class OpenXRStereo : public RenderTarget {
 public:
@@ -12,15 +13,17 @@ public:
         : configuration(configuration) {
     }
 
-    VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) override;
+    [[nodiscard]] vk::Extent2D currentExtent() const override;
+
+    std::pair<std::optional<uint32_t>, bool> acquireNextImage() override;
+
+    bool present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t uint32) override;
 
     std::array<bool, 3> getMouseButton() override;
 
     std::vector<std::string> getRequiredInstanceExtensions() override;
 
     std::vector<std::string> getRequiredDeviceExtensions() override;
-
-    [[nodiscard]] std::pair<uint32_t, uint32_t> getFramebufferSize() const override;
 
     std::array<double, 2> getCursorTranslation() override;
 

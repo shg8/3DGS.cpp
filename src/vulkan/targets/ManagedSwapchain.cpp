@@ -1,23 +1,56 @@
-#include "Swapchain.h"
+#include "ManagedSwapchain.h"
 
-#include "glm/glm.hpp"
-#include "spdlog/spdlog.h"
 #include <vk_enum_string_helper.h>
+#include <spdlog/spdlog.h>
 
-Swapchain::Swapchain(const std::shared_ptr<VulkanContext> &context, const std::shared_ptr<RenderTarget> &window,
-                     bool immediate) : context(context), window(window), immediate(immediate) {
-    createSwapchain();
-    createSwapchainImages();
+ManagedSwapchain::ManagedSwapchain(bool immediate) : immediate(immediate){
+
 }
 
-void Swapchain::createSwapchain() {
+vk::Extent2D ManagedSwapchain::currentExtent() const {
+    return swapchainExtent;
+}
+
+std::pair<std::optional<uint32_t>, bool> ManagedSwapchain::acquireNextImage() {
+    uint32_t currentImageIndex;
+    auto res = context->device->acquireNextImageKHR(swapchain.get(), UINT64_MAX,
+                                                    imageAvailableSemaphores[0].get(),
+                                                    nullptr, &currentImageIndex);
+    if (res == vk::Result::eErrorOutOfDateKHR) {
+        if (recreateSwapchain()) {
+            return {std::nullopt, true};
+        }
+        return {std::nullopt, false};
+    } else if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
+        throw std::runtime_error("Failed to acquire swapchain image");
+    }
+    return {{currentImageIndex}, false};
+}
+
+bool ManagedSwapchain::present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t imageIndex) {
+    vk::PresentInfoKHR presentInfo{waitSemaphores, swapchain.get(), imageIndex};
+    try {
+        auto ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
+        if (ret == vk::Result::eSuboptimalKHR || ret == vk::Result::eErrorOutOfDateKHR) {
+            return recreateSwapchain();
+        }
+        if (ret != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed to present swapchain image");
+        }
+    } catch (vk::OutOfDateKHRError &e) {
+        return recreateSwapchain();
+    }
+    return false;
+}
+
+void ManagedSwapchain::createSwapchain() {
     auto physicalDevice = context->physicalDevice;
 
     auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(*context->surface.value());
     auto formats = physicalDevice.getSurfaceFormatsKHR(*context->surface.value());
     auto presentModes = physicalDevice.getSurfacePresentModesKHR(*context->surface.value());
 
-    auto [width, height] = window->getFramebufferSize();
+    auto [width, height] = getFramebufferSize();
 
     surfaceFormat = formats[0];
     for (const auto &availableFormat: formats) {
@@ -98,7 +131,7 @@ void Swapchain::createSwapchain() {
     spdlog::debug("Swapchain created");
 }
 
-void Swapchain::createSwapchainImages() {
+void ManagedSwapchain::createSwapchainImages() {
     auto images = context->device->getSwapchainImagesKHR(*swapchain);
 
     for (auto &image: images) {
@@ -122,23 +155,7 @@ void Swapchain::createSwapchainImages() {
     }
 }
 
-std::pair<std::optional<uint32_t>, bool> Swapchain::acquireNextImage() {
-    uint32_t currentImageIndex;
-    auto res = context->device->acquireNextImageKHR(swapchain.get(), UINT64_MAX,
-                                                    imageAvailableSemaphores[0].get(),
-                                                    nullptr, &currentImageIndex);
-    if (res == vk::Result::eErrorOutOfDateKHR) {
-        if (recreateSwapchain()) {
-            return {std::nullopt, true};
-        }
-        return {std::nullopt, false};
-    } else if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
-        throw std::runtime_error("Failed to acquire swapchain image");
-    }
-    return {{currentImageIndex}, false};
-}
-
-bool Swapchain::recreateSwapchain() {
+bool ManagedSwapchain::recreateSwapchain() {
     auto oldExtent = currentExtent();
     spdlog::debug("Recreating swapchain");
     context->device->waitIdle();
@@ -151,18 +168,9 @@ bool Swapchain::recreateSwapchain() {
     return currentExtent() != oldExtent;
 }
 
-bool Swapchain::present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t imageIndex) {
-    vk::PresentInfoKHR presentInfo{waitSemaphores, swapchain.get(), imageIndex};
-    try {
-        auto ret = context->queues[VulkanContext::Queue::PRESENT].queue.presentKHR(presentInfo);
-        if (ret == vk::Result::eSuboptimalKHR || ret == vk::Result::eErrorOutOfDateKHR) {
-            return recreateSwapchain();
-        }
-        if (ret != vk::Result::eSuccess) {
-            throw std::runtime_error("Failed to present swapchain image");
-        }
-    } catch (vk::OutOfDateKHRError &e) {
-        return recreateSwapchain();
-    }
-    return false;
+void ManagedSwapchain::setup(std::shared_ptr<VulkanContext> context) {
+    this->context = context;
+
+    createSwapchain();
+    createSwapchainImages();
 }

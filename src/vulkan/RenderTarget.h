@@ -5,18 +5,15 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+#include "Swapchain.h"
 #include "VulkanContext.h"
 
-class RenderTarget {
+class RenderTarget : public Swapchain {
 public:
-    virtual VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) = 0;
-
     virtual std::array<bool, 3> getMouseButton() { return {false, false, false}; }
 
     virtual std::vector<std::string> getRequiredInstanceExtensions() { return {}; };
     virtual std::vector<std::string> getRequiredDeviceExtensions() { return {}; };
-
-    [[nodiscard]] virtual std::pair<uint32_t, uint32_t> getFramebufferSize() const = 0;
 
     virtual std::array<double, 2> getCursorTranslation() { return {0, 0}; }
 
@@ -33,9 +30,6 @@ public:
     virtual std::optional<vk::PhysicalDevice> requirePhysicalDevice(vk::Instance instance) {
         return std::nullopt;
     }
-
-    virtual ~RenderTarget() = default;
-
 };
 
 

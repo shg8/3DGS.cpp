@@ -16,6 +16,8 @@
 #include "vulkan/ImguiManager.h"
 #include "vulkan/QueryManager.h"
 
+
+
 class Renderer {
 public:
     struct alignas(16) UniformBuffer {
@@ -56,7 +58,7 @@ public:
         uint32_t g_num_blocks_per_workgroup; // == NUM_BLOCKS_PER_WORKGROUP
     };
 
-    explicit Renderer(VulkanSplatting::RendererConfiguration configuration);
+    explicit Renderer(VulkanSplatting::RendererConfiguration configuration, std::shared_ptr<RenderTarget> renderTarget);
 
     void createGui();
 
@@ -86,8 +88,8 @@ public:
 
 private:
     VulkanSplatting::RendererConfiguration configuration;
-    std::shared_ptr<RenderTarget> window;
     std::shared_ptr<VulkanContext> context;
+    std::shared_ptr<RenderTarget> renderTarget;
     std::shared_ptr<ImguiManager> imguiManager;
     std::shared_ptr<GSScene> scene;
     std::shared_ptr<QueryManager> queryManager = std::make_shared<QueryManager>();
@@ -119,8 +121,6 @@ private:
     std::atomic<bool> running = true;
 
     std::vector<vk::UniqueFence> inflightFences;
-
-    std::shared_ptr<Swapchain> swapchain;
 
     vk::UniqueCommandPool commandPool;
 
@@ -166,6 +166,4 @@ private:
 
     void updateUniforms();
 };
-
-
 #endif //RENDERER_H

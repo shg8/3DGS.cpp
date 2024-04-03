@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 
-GLFWWindow::GLFWWindow(std::string name, int width, int height) {
+GLFWWindow::GLFWWindow(std::string name, int width, int height, bool immediate): ManagedSwapchain(immediate) {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -17,6 +17,7 @@ VkSurfaceKHR GLFWWindow::createSurface(std::shared_ptr<VulkanContext> context) {
         VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
     }
+
     return surface;
 }
 
@@ -38,7 +39,7 @@ std::vector<std::string> GLFWWindow::getRequiredInstanceExtensions() {
     return extensions;
 }
 
-std::pair<uint32_t, uint32_t> GLFWWindow::getFramebufferSize() const {
+std::pair<uint32_t, uint32_t> GLFWWindow::getFramebufferSize() {
     int width, height;
     glfwGetFramebufferSize(static_cast<GLFWwindow *>(window), &width, &height);
     return {width, height};

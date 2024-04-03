@@ -6,8 +6,8 @@
 
 #include "targets/GLFWWindow.h"
 
-ImguiManager::ImguiManager(std::shared_ptr<VulkanContext> context, std::shared_ptr<Swapchain> swapchain,
-                           std::shared_ptr<RenderTarget> window) : context(context), swapchain(swapchain), window(window) {
+ImguiManager::ImguiManager(std::shared_ptr<VulkanContext> context,
+                           std::shared_ptr<RenderTarget> window) : context(context), window(window) {
 }
 
 void ImguiManager::createCommandPool() {
@@ -129,11 +129,11 @@ void ImguiManager::init() {
     init_info.Queue = context->queues[VulkanContext::Queue::GRAPHICS].queue;
     init_info.DescriptorPool = descriptorPool.get();
     init_info.MinImageCount = 2;
-    init_info.ImageCount = swapchain->imageCount + 1;
+    init_info.ImageCount = window->imageCount + 1;
     init_info.UseDynamicRendering = true;
     init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     init_info.PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfo{
-        {}, 1, &swapchain->swapchainFormat
+        {}, 1, &window->swapchainFormat
     };
 
     ImGui_ImplVulkan_Init(&init_info);
@@ -169,9 +169,9 @@ void ImguiManager::draw(vk::CommandBuffer commandBuffer, uint32_t currentImageIn
     ImGui::Render();
 
     vk::RenderingAttachmentInfoKHR attachment_info{
-        swapchain->swapchainImages[currentImageIndex]->imageView.get(), vk::ImageLayout::eColorAttachmentOptimal
+        window->swapchainImages[currentImageIndex]->imageView.get(), vk::ImageLayout::eColorAttachmentOptimal
     };
-    vk::RenderingInfoKHR rendering_info{{}, vk::Rect2D{{0, 0}, swapchain->currentExtent()}, 1, {}, 1, &attachment_info};
+    vk::RenderingInfoKHR rendering_info{{}, vk::Rect2D{{0, 0}, window->currentExtent()}, 1, {}, 1, &attachment_info};
     commandBuffer.beginRenderingKHR(rendering_info);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
     commandBuffer.endRenderingKHR();

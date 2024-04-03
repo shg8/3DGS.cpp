@@ -1,6 +1,14 @@
 #ifdef VKGS_ENABLE_OPENXR
 #include "OpenXRStereo.h"
-VkSurfaceKHR OpenXRStereo::createSurface(std::shared_ptr<VulkanContext> context) {
+
+vk::Extent2D OpenXRStereo::currentExtent() const {
+    return {};
+}
+
+std::pair<std::optional<uint32_t>, bool> OpenXRStereo::acquireNextImage() {
+}
+
+bool OpenXRStereo::present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t uint32) {
 }
 
 std::array<bool, 3> OpenXRStereo::getMouseButton() {
@@ -13,10 +21,6 @@ std::vector<std::string> OpenXRStereo::getRequiredInstanceExtensions() {
 
 std::vector<std::string> OpenXRStereo::getRequiredDeviceExtensions() {
     return configuration.deviceExtensions;
-}
-
-std::pair<uint32_t, uint32_t> OpenXRStereo::getFramebufferSize() const {
-    return {};
 }
 
 std::array<double, 2> OpenXRStereo::getCursorTranslation() {

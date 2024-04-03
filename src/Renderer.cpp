@@ -16,6 +16,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "vulkan/targets/ManagedSwapchain.h"
 #include "vulkan/targets/OpenXRStereo.h"
 
 void Renderer::initialize() {
@@ -33,12 +34,12 @@ void Renderer::initialize() {
 }
 
 void Renderer::handleInput() {
-    auto translation = window->getCursorTranslation();
-    auto keys = window->getKeys(); // W, A, S, D
+    auto translation = renderTarget->getCursorTranslation();
+    auto keys = renderTarget->getKeys(); // W, A, S, D
 
-    if ((!configuration.enableGui || (!guiManager.wantCaptureMouse() && !guiManager.mouseCapture)) && window->
+    if ((!configuration.enableGui || (!guiManager.wantCaptureMouse() && !guiManager.mouseCapture)) && renderTarget->
         getMouseButton()[0]) {
-        window->mouseCapture(true);
+        renderTarget->mouseCapture(true);
         guiManager.mouseCapture = true;
     }
 
@@ -74,7 +75,7 @@ void Renderer::handleInput() {
             direction += glm::vec3(0.0f, -1.0f, 0.0f);
         }
         if (keys[6]) {
-            window->mouseCapture(false);
+            renderTarget->mouseCapture(false);
             guiManager.mouseCapture = false;
         }
         if (direction != glm::vec3(0.0f, 0.0f, 0.0f)) {
@@ -102,7 +103,7 @@ void Renderer::retrieveTimestamps() {
 }
 
 void Renderer::recreatePipelines() {
-    auto [width, height] = swapchain->currentExtent();
+    auto [width, height] = renderTarget->currentExtent();
     auto tileX = (width + 16 - 1) / 16;
     auto tileY = (height + 16 - 1) / 16;
     tileBoundaryBuffer->realloc(tileX * tileY * sizeof(uint32_t) * 2);
@@ -114,14 +115,14 @@ void Renderer::recreatePipelines() {
 
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
-    window = configuration.renderingTarget;
-    context = std::make_shared<VulkanContext>(window->getRequiredInstanceExtensions(), window->getRequiredDeviceExtensions(),
+
+    context = std::make_shared<VulkanContext>(renderTarget->getRequiredInstanceExtensions(), renderTarget->getRequiredDeviceExtensions(),
                                               configuration.enableVulkanValidationLayers);
 
     context->createInstance();
-    auto surface = static_cast<vk::SurfaceKHR>(window->createSurface(context));
-    if (auto requiredPhysicalDevice = window->requirePhysicalDevice(context->instance.get());
+    if (auto requiredPhysicalDevice = renderTarget->requirePhysicalDevice(context->instance.get());
         !requiredPhysicalDevice.has_value()) {
+        auto surface = std::dynamic_pointer_cast<ManagedSwapchain>(renderTarget)->createSurface(context);
         context->selectPhysicalDevice(configuration.physicalDeviceId, surface);
     } else {
         context->physicalDevice = requiredPhysicalDevice.value();
@@ -142,7 +143,8 @@ void Renderer::initializeVulkan() {
     context->createLogicalDevice(pdf, pdf11, pdf12);
     context->createDescriptorPool(1);
 
-    swapchain = std::make_shared<Swapchain>(context, window, configuration.immediateSwapchain);
+    if (auto managedSwapchain = std::dynamic_pointer_cast<ManagedSwapchain>(renderTarget))
+        managedSwapchain->setup(context);
 
     for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
         inflightFences.emplace_back(
@@ -154,7 +156,7 @@ void Renderer::initializeVulkan() {
         renderFinishedSemaphores[i] = context->device->createSemaphoreUnique(vk::SemaphoreCreateInfo());
     }
 
-    if (auto openXRBackend = std::dynamic_pointer_cast<OpenXRStereo>(window)) {
+    if (auto openXRBackend = std::dynamic_pointer_cast<OpenXRStereo>(renderTarget)) {
         openXRBackend->postVulkanInit(context->instance.get(), context->physicalDevice, context->device.get(),
                                        context->queues[VulkanContext::Queue::GRAPHICS].queueFamily,
                                        context->queues[VulkanContext::Queue::GRAPHICS].queueIndex);
@@ -202,7 +204,7 @@ void Renderer::createPreprocessPipeline() {
     preprocessPipeline->build();
 }
 
-Renderer::Renderer(VulkanSplatting::RendererConfiguration configuration) : configuration(std::move(configuration)) {
+Renderer::Renderer(VulkanSplatting::RendererConfiguration configuration, std::shared_ptr<RenderTarget> renderTarget) : configuration(std::move(configuration)), renderTarget(std::move(renderTarget)) {
 }
 
 void Renderer::createGui() {
@@ -212,7 +214,7 @@ void Renderer::createGui() {
 
     spdlog::debug("Creating GUI");
 
-    imguiManager = std::make_shared<ImguiManager>(context, swapchain, window);
+    imguiManager = std::make_shared<ImguiManager>(context, renderTarget);
     imguiManager->init();
     guiManager.init();
 }
@@ -322,7 +324,7 @@ void Renderer::createPreprocessSortPipeline() {
 
 void Renderer::createTileBoundaryPipeline() {
     spdlog::debug("Creating tile boundary pipeline");
-    auto [width, height] = swapchain->currentExtent();
+    auto [width, height] = renderTarget->currentExtent();
     auto tileX = (width + 16 - 1) / 16;
     auto tileY = (height + 16 - 1) / 16;
     tileBoundaryBuffer = Buffer::storage(context, tileX * tileY * sizeof(uint32_t) * 2, false);
@@ -359,7 +361,7 @@ void Renderer::createRenderPipeline() {
     inputSet->build();
 
     auto outputSet = std::make_shared<DescriptorSet>(context, 1);
-    for (auto &image: swapchain->swapchainImages) {
+    for (auto &image: renderTarget->swapchainImages) {
         outputSet->bindImageToDescriptorSet(0, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute,
                                             image);
     }
@@ -377,16 +379,15 @@ void Renderer::draw() {
     }
     context->device->resetFences(inflightFences[0].get());
 
-    auto [optionalImageIndex, extentChanged] = swapchain->acquireNextImage();
+    auto [optionalImageIndex, extentChanged] = renderTarget->acquireNextImage();
     if (extentChanged) {
         recreatePipelines();
     }
 
     if (!optionalImageIndex.has_value()) {
         return;
-    } else {
-        currentImageIndex = optionalImageIndex.value();
     }
+    currentImageIndex = optionalImageIndex.value();
 
 startOfRenderLoop:
     handleInput();
@@ -406,13 +407,13 @@ startOfRenderLoop:
         goto startOfRenderLoop;
     }
     vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eComputeShader;
-    submitInfo = vk::SubmitInfo{}.setWaitSemaphores(swapchain->imageAvailableSemaphores[0].get())
+    submitInfo = vk::SubmitInfo{}.setWaitSemaphores(renderTarget->imageAvailableSemaphores[0].get())
             .setCommandBuffers(renderCommandBuffer.get())
             .setSignalSemaphores(renderFinishedSemaphores[0].get())
             .setWaitDstStageMask(waitStage);
     context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
 
-    extentChanged = swapchain->present(std::vector<vk::Semaphore>{renderFinishedSemaphores[0].get()}, currentImageIndex);
+    extentChanged = renderTarget->present(std::vector<vk::Semaphore>{renderFinishedSemaphores[0].get()}, currentImageIndex);
 
     if (extentChanged) {
         recreatePipelines();
@@ -421,7 +422,7 @@ startOfRenderLoop:
 
 void Renderer::run() {
     while (running) {
-        if (!window->tick()) {
+        if (!renderTarget->tick()) {
             break;
         }
 
@@ -573,7 +574,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     preprocessSortPipeline->bind(renderCommandBuffer, 0, iters % 2 == 0 ? 0 : 1);
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("preprocess_sort_start"));
-    uint32_t tileX = (swapchain->currentExtent().width + 16 - 1) / 16;
+    uint32_t tileX = (renderTarget->currentExtent().width + 16 - 1) / 16;
     // assert(tileX == 50);
     renderCommandBuffer->pushConstants(preprocessSortPipeline->pipelineLayout.get(),
                                        vk::ShaderStageFlagBits::eCompute, 0,
@@ -648,7 +649,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     renderPipeline->bind(renderCommandBuffer, 0, std::vector<uint32_t>{0, currentImageIndex});
     renderCommandBuffer->writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, context->queryPool.get(),
                                         queryManager->registerQuery("render_start"));
-    auto [width, height] = swapchain->currentExtent();
+    auto [width, height] = renderTarget->currentExtent();
     uint32_t constants[2] = {width, height};
     renderCommandBuffer->pushConstants(renderPipeline->pipelineLayout.get(),
                                        vk::ShaderStageFlagBits::eCompute, 0,
@@ -658,7 +659,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     vk::ImageMemoryBarrier imageMemoryBarrier{};
     imageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
     imageMemoryBarrier.newLayout = vk::ImageLayout::eGeneral;
-    imageMemoryBarrier.image = swapchain->swapchainImages[currentImageIndex]->image;
+    imageMemoryBarrier.image = renderTarget->swapchainImages[currentImageIndex]->image;
     imageMemoryBarrier.subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
     imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
     imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eShaderWrite;
@@ -712,7 +713,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
 void Renderer::updateUniforms() {
     UniformBuffer data{};
-    auto [width, height] = swapchain->currentExtent();
+    auto [width, height] = renderTarget->currentExtent();
     data.width = width;
     data.height = height;
     data.camera_position = glm::vec4(camera.position, 1.0f);

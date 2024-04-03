@@ -79,6 +79,8 @@ add_library(3dgs_cpp STATIC
         ${EXTERNAL_SOURCE}
         vulkan/targets/OpenXRStereo.cpp
         vulkan/targets/OpenXRStereo.h
+        vulkan/targets/ManagedSwapchain.cpp
+        vulkan/targets/ManagedSwapchain.h
 )
 
 target_include_directories(3dgs_cpp

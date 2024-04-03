@@ -1,19 +1,22 @@
 #ifndef GLFWWINDOW_H
 #define GLFWWINDOW_H
 
+#include "ManagedSwapchain.h"
 #include "../RenderTarget.h"
 
-class GLFWWindow final : public RenderTarget {
+class GLFWWindow final : public ManagedSwapchain {
 public:
-    GLFWWindow(std::string name, int width, int height);
+    GLFWWindow(std::string name, int width, int height, bool immediate);
 
+protected:
+    [[nodiscard]] std::pair<uint32_t, uint32_t> getFramebufferSize() override;
+
+public:
     VkSurfaceKHR createSurface(std::shared_ptr<VulkanContext> context) override;
 
     std::array<bool, 3> getMouseButton() override;
 
     std::vector<std::string> getRequiredInstanceExtensions() override;
-
-    [[nodiscard]] std::pair<uint32_t, uint32_t> getFramebufferSize() const override;
 
     std::array<double, 2> getCursorTranslation() override;
 

@@ -103,12 +103,10 @@ int main(int argc, char** argv)
     auto width = widthFlag ? args::get(widthFlag) : 1280;
     auto height = heightFlag ? args::get(heightFlag) : 720;
 
-    config.renderingTarget = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
-
 #ifndef DEBUG
     try {
 #endif
-    auto renderer = VulkanSplatting(config);
+    auto renderer = VulkanSplatting(std::move(config), VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height, config.immediateSwapchain));
     renderer.start();
 #ifndef DEBUG
     } catch (const std::exception& e) {

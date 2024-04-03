@@ -22,14 +22,12 @@ public:
         float near = 0.2f;
         float far = 1000.0f;
         bool enableGui = false;
-
-        std::shared_ptr<RenderTarget> renderingTarget;
     };
 
-    explicit VulkanSplatting(RendererConfiguration configuration) : configuration(configuration) {}
+    explicit VulkanSplatting(RendererConfiguration configuration, std::shared_ptr<RenderTarget> renderTarget);
 
 #ifdef VKGS_ENABLE_GLFW
-    static std::shared_ptr<RenderTarget> createGlfwWindow(std::string name, int width, int height);
+    static std::shared_ptr<RenderTarget> createGlfwWindow(std::string name, int width, int height, bool immediate);
 #endif
 
 #ifdef VKGS_ENABLE_METAL
@@ -61,6 +59,7 @@ public:
 private:
     RendererConfiguration configuration;
     std::shared_ptr<Renderer> renderer;
+    std::weak_ptr<RenderTarget> renderTarget;
 };
 
 #endif //VULKANSPLATTING_H

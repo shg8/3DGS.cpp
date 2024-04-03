@@ -4,42 +4,21 @@
 
 #include <memory>
 #include "VulkanContext.h"
-#include "RenderTarget.h"
 
 class Swapchain {
 public:
-    Swapchain(const std::shared_ptr<VulkanContext> &context, const std::shared_ptr<RenderTarget> &window, bool immediate);
+    [[nodiscard]] virtual vk::Extent2D currentExtent() const = 0;
 
-    [[nodiscard]] virtual vk::Extent2D currentExtent() const {
-        return swapchainExtent;
-    }
+    virtual std::pair<std::optional<uint32_t>, bool> acquireNextImage() = 0;
 
-    std::pair<std::optional<uint32_t>, bool> acquireNextImage();
+    virtual bool present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t uint32) = 0;
 
-    bool present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t uint32);
+    virtual ~Swapchain() = default;
 
     std::vector<std::shared_ptr<Image>> swapchainImages;
     std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
     vk::Format swapchainFormat;
     uint32_t imageCount;
-
-private:
-    std::shared_ptr<VulkanContext> context;
-    std::shared_ptr<RenderTarget> window;
-
-    vk::UniqueSwapchainKHR swapchain;
-    vk::SurfaceFormatKHR surfaceFormat;
-    vk::Extent2D swapchainExtent;
-    vk::PresentModeKHR presentMode;
-
-    bool immediate = false;
-
-    void createSwapchain();
-
-    void createSwapchainImages();
-
-    bool recreateSwapchain();
-
 };
 
 
