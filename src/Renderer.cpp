@@ -16,6 +16,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "vulkan/targets/OpenXRStereo.h"
+
 void Renderer::initialize() {
     initializeVulkan();
     createGui();
@@ -119,7 +121,7 @@ void Renderer::recreateSwapchain() {
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
     window = configuration.renderingTarget;
-    context = std::make_shared<VulkanContext>(window->getRequiredInstanceExtensions(), std::vector<std::string>{},
+    context = std::make_shared<VulkanContext>(window->getRequiredInstanceExtensions(), window->getRequiredDeviceExtensions(),
                                               configuration.enableVulkanValidationLayers);
 
     context->createInstance();
@@ -156,6 +158,12 @@ void Renderer::initializeVulkan() {
     renderFinishedSemaphores.resize(FRAMES_IN_FLIGHT);
     for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
         renderFinishedSemaphores[i] = context->device->createSemaphoreUnique(vk::SemaphoreCreateInfo());
+    }
+
+    if (auto openXRBackend = std::dynamic_pointer_cast<OpenXRStereo>(window)) {
+        openXRBackend->postVulkanInit(context->instance.get(), context->physicalDevice, context->device.get(),
+                                       context->queues[VulkanContext::Queue::GRAPHICS].queueFamily,
+                                       context->queues[VulkanContext::Queue::GRAPHICS].queueIndex);
     }
 }
 

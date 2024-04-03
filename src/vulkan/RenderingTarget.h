@@ -13,7 +13,8 @@ public:
 
     virtual std::array<bool, 3> getMouseButton() { return {false, false, false}; }
 
-    virtual std::vector<std::string> getRequiredInstanceExtensions() = 0;
+    virtual std::vector<std::string> getRequiredInstanceExtensions() { return {}; };
+    virtual std::vector<std::string> getRequiredDeviceExtensions() { return {}; };
 
     [[nodiscard]] virtual std::pair<uint32_t, uint32_t> getFramebufferSize() const = 0;
 
@@ -36,7 +37,6 @@ public:
     virtual ~RenderingTarget() = default;
 
 };
-
 
 
 #endif //WINDOW_H

@@ -97,7 +97,7 @@ target_include_directories(3dgs_cpp
 
 add_dependencies(3dgs_cpp shaders)
 
-target_link_libraries(3dgs_cpp PUBLIC Vulkan::Vulkan glfw spdlog::spdlog)
+target_link_libraries(3dgs_cpp PUBLIC Vulkan::Vulkan glfw spdlog::spdlog third_party)
 if (UNIX)
     target_link_libraries(3dgs_cpp PUBLIC ${CMAKE_DL_LIBS})
 endif ()

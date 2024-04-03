@@ -18,6 +18,8 @@ public:
 
     std::vector<std::string> getRequiredInstanceExtensions() override;
 
+    std::vector<std::string> getRequiredDeviceExtensions() override;
+
     [[nodiscard]] std::pair<uint32_t, uint32_t> getFramebufferSize() const override;
 
     std::array<double, 2> getCursorTranslation() override;
@@ -33,6 +35,9 @@ public:
     void logMovement(float x, float y) override;
 
     std::optional<vk::PhysicalDevice> requirePhysicalDevice(vk::Instance instance) override;
+
+    virtual void postVulkanInit(vk::Instance instance, vk::PhysicalDevice physicalDevice, vk::Device device, uint32_t queueFamily, uint32_t queueIndex);
+
 
 private:
     VulkanSplatting::OpenXRConfiguration configuration;

@@ -29,11 +29,27 @@
 **/
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 #include <openxr/openxr.h>
 
+#define XR_CHECK(x, msg) if (XR_FAILED(x)) { throw std::runtime_error(msg); }
+
 namespace OXR {
+    inline std::vector<vk::Format> getVulkanFormatsForSwapchain(const std::shared_ptr<OXRContext> &context) {
+        uint32_t swapchainFormatCount;
+        XR_CHECK(xrEnumerateSwapchainFormats(context->oxrSession, 0, &swapchainFormatCount, nullptr),
+                 "Failed to enumerate swapchain formats");
+
+        std::vector<vk::Format> swapchainFormats(swapchainFormatCount);
+        XR_CHECK(
+            xrEnumerateSwapchainFormats(context->oxrSession, swapchainFormatCount, &swapchainFormatCount,
+                reinterpret_cast<int64_t *>(swapchainFormats.data())), "Failed to enumerate swapchain formats");
+
+        return swapchainFormats;
+    }
+
     inline bool isExtensionSupported(const std::string &extensionName) {
         uint32_t extensionCount;
         XrResult result = xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr);

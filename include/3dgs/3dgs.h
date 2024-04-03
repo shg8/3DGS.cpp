@@ -42,6 +42,7 @@ public:
         std::vector<std::string> deviceExtensions;
 
         std::function<void*(void*)> getPhysicalDevice;
+        std::function<void(void*, void*, void*, uint32_t, uint32_t)> postVulkanInit;
     };
     static std::shared_ptr<RenderingTarget> createOpenXRRenderingTarget(OpenXRConfiguration configuration);
 #endif

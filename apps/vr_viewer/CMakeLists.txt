@@ -19,9 +19,11 @@ add_executable(3dgs_vr_viewer
         src/main.cpp
         src/VRViewer.cpp
         src/VRViewer.h
-        src/OXRUtils.h
-        src/OXRContext.cpp
-        src/OXRContext.h
+        src/oxr/Utils.h
+        src/oxr/OXRContext.cpp
+        src/oxr/OXRContext.h
+        src/oxr/Layer.cpp
+        src/oxr/Layer.h
 )
 
 target_compile_definitions(3dgs_cpp PUBLIC VKGS_ENABLE_OPENXR)

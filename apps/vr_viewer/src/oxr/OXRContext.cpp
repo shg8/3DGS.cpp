@@ -7,7 +7,10 @@
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
+#include "Utils.h"
 #include "spdlog/spdlog.h"
+
+using namespace OXR;
 
 void OXRContext::setup() {
     bool vulkanSupported = OXR::isExtensionSupported(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
