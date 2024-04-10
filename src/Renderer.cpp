@@ -667,7 +667,7 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
     vk::ImageMemoryBarrier imageMemoryBarrier{};
     imageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
     imageMemoryBarrier.newLayout = vk::ImageLayout::eGeneral;
-    imageMemoryBarrier.image = renderTarget->swapchainImages[currentImageIndex]->image;
+    imageMemoryBarrier.image = renderTarget->swapchainImages[currentImageIndex].image->image; // TODO: stereo
     imageMemoryBarrier.subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
     imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
     imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eShaderWrite;

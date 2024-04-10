@@ -21,7 +21,7 @@ struct ImageProxy {
     std::array<std::shared_ptr<Image>, 2> stereoImages;
 
     std::shared_ptr<Image> operator[](const size_t index) {
-        if (index > 1 || !isStereo) {
+        if (index > 1 || (!isStereo && index > 0)) {
             throw std::runtime_error("Invalid index for stereo image");
         }
         if (isStereo) {
