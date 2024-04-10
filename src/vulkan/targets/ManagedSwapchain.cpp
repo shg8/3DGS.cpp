@@ -140,14 +140,13 @@ void ManagedSwapchain::createSwapchainImages() {
             swapchainFormat, {},
             {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
         });
-        swapchainImages.push_back(std::make_shared<Image>(
+        swapchainImages.push_back({false, std::make_shared<Image>(
                 image,
                 std::move(imageView),
                 swapchainFormat,
                 swapchainExtent,
                 std::nullopt
-            )
-        );
+            ), nullptr});
     }
 
     for (int i = 0; i < swapchainImages.size(); i++) {

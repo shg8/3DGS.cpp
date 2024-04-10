@@ -15,7 +15,9 @@ public:
 
     virtual ~Swapchain() = default;
 
-    std::vector<std::shared_ptr<Image>> swapchainImages;
+    virtual bool isStereo() { return false; }
+
+    std::vector<ImageProxy> swapchainImages;
     std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
     vk::Format swapchainFormat;
     uint32_t imageCount;

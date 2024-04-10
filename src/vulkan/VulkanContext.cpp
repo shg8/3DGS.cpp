@@ -44,7 +44,6 @@ VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions
         deviceExtensions.push_back("VK_KHR_portability_subset");
     #endif
 #endif
-    deviceExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 
     if (validation_layers_enabled) {
         deviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
@@ -66,12 +65,18 @@ VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions
 
 void VulkanContext::createInstance() {
     vk::ApplicationInfo appInfo = {
-        "Vulkan Splatting", VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_3
+        "Vulkan Splatting", VK_MAKE_VERSION(1, 0, 0), "3DGS.cpp", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_2
     };
 
     std::vector<const char *> requiredLayers;
     if (validationLayersEnabled) {
         requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+    }
+
+    // print instance extensions
+    spdlog::debug("Instance extensions:");
+    for (auto& extension: instanceExtensions) {
+        spdlog::debug("\t{}", extension);
     }
 
     auto instanceExtensionsCharPtr = Utils::stringVectorToCharPtrVector(instanceExtensions);
@@ -219,8 +224,11 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {
         indices.graphicsFamily.value(), indices.computeFamily.value(),
-        indices.presentFamily.value()
     };
+
+    if (indices.presentFamily.has_value()) {
+        uniqueQueueFamilies.insert(indices.presentFamily.value());
+    }
 
     float queuePriority = 1.0f;
     for (auto queueFamily: uniqueQueueFamilies) {
@@ -228,6 +236,12 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     }
 
     deviceFeatures.samplerAnisotropy = VK_TRUE;
+
+    // print device extensions
+    spdlog::debug("Device extensions:");
+    for (auto& extension: deviceExtensions) {
+        spdlog::debug("\t{}", extension);
+    }
 
     auto deviceExtensionsCharPtr = Utils::stringVectorToCharPtrVector(deviceExtensions);
 
@@ -246,13 +260,13 @@ void VulkanContext::createLogicalDevice(vk::PhysicalDeviceFeatures deviceFeature
     for (auto unique_queue_family: uniqueQueueFamilies) {
         auto queue = device->getQueue(unique_queue_family, 0);
         std::set<Queue::Type> types;
-        if (unique_queue_family == indices.graphicsFamily.value()) {
+        if (unique_queue_family == indices.graphicsFamily) {
             types.insert(Queue::Type::GRAPHICS);
         }
-        if (unique_queue_family == indices.computeFamily.value()) {
+        if (unique_queue_family == indices.computeFamily) {
             types.insert(Queue::Type::COMPUTE);
         }
-        if (unique_queue_family == indices.presentFamily.value()) {
+        if (indices.presentFamily == unique_queue_family) {
             types.insert(Queue::Type::PRESENT);
         }
 

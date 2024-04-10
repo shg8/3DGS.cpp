@@ -9,21 +9,46 @@ namespace OXR {
         depth_enabled) {
         createSwapchains(context);
         createProjectionViews(context, flags);
+        spdlog::info("Layer created");
+    }
+
+    std::pair<std::optional<uint32_t>, bool> Layer::acquireNextImage(int8_t swapchain) {
+        XrSwapchainImageAcquireInfo acquireInfo = {XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
+        auto ret = xrAcquireSwapchainImage(swapchains[swapchain], &acquireInfo, &lastImageAcquired[swapchain]);
+        XR_CHECK(ret, "Failed to acquire swapchain image");
+
+        XrSwapchainImageWaitInfo waitInfo = {XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
+        waitInfo.timeout = INT64_MAX;
+        ret = xrWaitSwapchainImage(swapchains[swapchain], &waitInfo);
+        XR_CHECK(ret, "Failed to wait for swapchain image");
+
+        return {{lastImageAcquired[swapchain]}, false};
+    }
+
+    bool Layer::present(int8_t swapchain, uint32_t imageIndex) {
+        assert(imageIndex == lastImageAcquired[swapchain]); // TODO: Remove this check
+
+        XrSwapchainImageReleaseInfo releaseInfo = {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+        XR_CHECK(xrReleaseSwapchainImage(swapchains[swapchain], &releaseInfo), "Failed to release swapchain image");
     }
 
     void Layer::createSwapchains(std::shared_ptr<OXRContext> context) {
         // Print the swapchain formats
         spdlog::info("Swapchain formats:");
         auto swapchainFormats = getVulkanFormatsForSwapchain(context);
+        vk::Format selectedFormat = swapchainFormats[0];
         for (vk::Format format: swapchainFormats) {
-            spdlog::info("{}", string_VkFormat(static_cast<VkFormat>(format)));
+            spdlog::info("\t{}", string_VkFormat(static_cast<VkFormat>(format)));
+            if (format == vk::Format::eB8G8R8A8Unorm) {
+                selectedFormat = format;
+            }
         }
 
         std::vector<XrSwapchainImageVulkanKHR> swapchainImageVectors[2];
         for (int i = 0; i < 2; i++) {
             XrSwapchainCreateInfo swapchainCreateInfo = {XR_TYPE_SWAPCHAIN_CREATE_INFO};
             swapchainCreateInfo.arraySize = 1;
-            swapchainCreateInfo.format = static_cast<int64_t>(swapchainFormats[0]);
+            swapchainCreateInfo.format = static_cast<int64_t>(selectedFormat);
             swapchainCreateInfo.width = context->views[i].recommendedImageRectWidth;
             swapchainCreateInfo.height = context->views[i].recommendedImageRectHeight;
             swapchainCreateInfo.mipCount = 1;
@@ -132,17 +157,21 @@ namespace OXR {
 
     void Layer::createProjectionViews(std::shared_ptr<OXRContext> context, uint64_t flags) {
         for (int i = 0; i < 2; i++) {
-            views[i].pose = {.orientation = { 0.0f, 0.0f, 0.0f, 1.0f }, .position = { 0.0f, 0.0f, 0.0f }};
+            views[i].pose = {.orientation = {0.0f, 0.0f, 0.0f, 1.0f}, .position = {0.0f, 0.0f, 0.0f}};
             views[i].subImage.swapchain = swapchains[i];
             views[i].subImage.imageRect.offset = {0, 0};
-            views[i].subImage.imageRect.extent = {static_cast<int32_t>(context->views[i].recommendedImageRectWidth),
-                                                  static_cast<int32_t>(context->views[i].recommendedImageRectHeight)};
+            views[i].subImage.imageRect.extent = {
+                static_cast<int32_t>(context->views[i].recommendedImageRectWidth),
+                static_cast<int32_t>(context->views[i].recommendedImageRectHeight)
+            };
             if (depthEnabled) {
                 views[i].next = &depthLayer;
                 depthLayer.subImage.swapchain = depthSwapchains[i];
                 depthLayer.subImage.imageRect.offset = {0, 0};
-                depthLayer.subImage.imageRect.extent = {static_cast<int32_t>(context->views[i].recommendedImageRectWidth),
-                                                        static_cast<int32_t>(context->views[i].recommendedImageRectHeight)};
+                depthLayer.subImage.imageRect.extent = {
+                    static_cast<int32_t>(context->views[i].recommendedImageRectWidth),
+                    static_cast<int32_t>(context->views[i].recommendedImageRectHeight)
+                };
             }
         }
 

@@ -8,7 +8,10 @@ namespace OXR {
     class OXRContext {
     public:
         void setup();
+
         void* getPhysicalDevice(void *instance) const;
+
+        void checkVulkanInstance(void * instance) const;
 
         void createSession(void *vkInstance, void *vkPhysicalDevice, void *vkDevice, uint32_t vkQueueFamilyIndex,
                            uint32_t vkQueueIndex);

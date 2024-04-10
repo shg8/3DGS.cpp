@@ -15,7 +15,6 @@ public:
     struct RendererConfiguration {
         bool enableVulkanValidationLayers = false;
         std::optional<uint8_t> physicalDeviceId = std::nullopt;
-        bool immediateSwapchain = false;
         std::string scene;
 
         float fov = 45.0f;
@@ -36,11 +35,18 @@ public:
 
 #ifdef VKGS_ENABLE_OPENXR
     struct OpenXRConfiguration {
+        struct PostVulkanSetup {
+            std::vector<void*> swapchainImages;
+        };
         std::vector<std::string> instanceExtensions;
         std::vector<std::string> deviceExtensions;
 
         std::function<void*(void*)> getPhysicalDevice;
         std::function<void(void*, void*, void*, uint32_t, uint32_t)> postVulkanInit;
+        std::function<std::pair<uint32_t, uint32_t>(void)> getCurrentExtent;
+
+        std::function<std::pair<std::optional<uint32_t>, bool> (uint8_t)> acquireNextImage;
+        std::function<bool(uint32_t)> present;
     };
     static std::shared_ptr<RenderTarget> createOpenXRRenderTarget(OpenXRConfiguration configuration);
 #endif

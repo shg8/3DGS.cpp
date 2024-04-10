@@ -13,11 +13,16 @@ class Layer {
 public:
     explicit Layer(std::shared_ptr<OXRContext> context, XrCompositionLayerFlags flags, bool depth_enabled);
 
+    std::pair<std::optional<uint32_t>, bool> acquireNextImage(int8_t swapchain);
+
+    bool present(int8_t swapchain, uint32_t imageIndex);
+
+
+    XrCompositionLayerProjectionView views[2] = {{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}, {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}};
 
 private:
     XrCompositionLayerProjection layer = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
     XrCompositionLayerDepthInfoKHR depthLayer = {XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR};
-    XrCompositionLayerProjectionView views[2] = {{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}, {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}};
     XrSwapchain swapchains[2] = {XR_NULL_HANDLE, XR_NULL_HANDLE};
     uint32_t swapchainSize[2] = {0, 0};
     uint32_t lastImageAcquired[2] = {0, 0};

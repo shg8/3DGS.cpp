@@ -5,13 +5,34 @@
 
 #define FRAMES_IN_FLIGHT 1
 
+#include <memory>
 #include <optional>
 #include <set>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 #include "vk_mem_alloc.h"
 
-struct Image {
+struct Image;
+
+struct ImageProxy {
+    bool isStereo = false;
+
+    std::shared_ptr<Image> image;
+    std::array<std::shared_ptr<Image>, 2> stereoImages;
+
+    std::shared_ptr<Image> operator[](const size_t index) {
+        if (index > 1 || !isStereo) {
+            throw std::runtime_error("Invalid index for stereo image");
+        }
+        if (isStereo) {
+            return stereoImages[index];
+        } else {
+            return image;
+        }
+    }
+};
+
+struct Image : std::enable_shared_from_this<Image> {
     vk::Image image;
     vk::UniqueImageView imageView;
     vk::Format format;
@@ -25,8 +46,10 @@ struct Image {
               format(format),
               extent(extent),
               framebuffer(std::move(framebuffer)) {
-    }
+        }
 };
+
+
 
 class VulkanContext {
 private:

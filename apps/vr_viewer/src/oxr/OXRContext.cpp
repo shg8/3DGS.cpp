@@ -21,8 +21,6 @@ void OXRContext::setup() {
     createInstance();
     createSystem();
     setupViews();
-    std::ignore = getRequiredVulkanInstanceExtensions();
-    std::ignore = getRequiredVulkanDeviceExtensions();
 }
 
 void OXRContext::createInstance() {
@@ -111,8 +109,6 @@ std::vector<std::string> OXRContext::getRequiredVulkanInstanceExtensions() const
         throw std::runtime_error("Failed to get Vulkan instance extensions");
     }
 
-    spdlog::debug("Vulkan instance extensions: {}", extensions);
-
     // split extensions by space
     std::vector<std::string> extensionList;
     std::string extension;
@@ -147,8 +143,6 @@ std::vector<std::string> OXRContext::getRequiredVulkanDeviceExtensions() const {
         throw std::runtime_error("Failed to get Vulkan device extensions");
     }
 
-    spdlog::debug("Vulkan device extensions: {}", extensions);
-
     // split extensions by space
     std::vector<std::string> extensionList;
     std::string extension;
@@ -165,6 +159,9 @@ std::vector<std::string> OXRContext::getRequiredVulkanDeviceExtensions() const {
 }
 
 void * OXRContext::getPhysicalDevice(void *instance) const {
+    checkVulkanInstance(instance);
+
+    spdlog::debug("Getting Vulkan graphics device");
     PFN_xrGetVulkanGraphicsDeviceKHR xrGetVulkanGraphicsDeviceKHR;
     auto result = xrGetInstanceProcAddr(oxrInstance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsDeviceKHR));
     if (XR_FAILED(result)) {
@@ -180,8 +177,25 @@ void * OXRContext::getPhysicalDevice(void *instance) const {
     return physicalDevice;
 }
 
+void OXRContext::checkVulkanInstance(void *instance) const {
+    XrGraphicsRequirementsVulkanKHR requirements = {XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR};
+    PFN_xrGetVulkanGraphicsRequirementsKHR xrGetVulkanGraphicsRequirementsKHR;
+    auto result = xrGetInstanceProcAddr(oxrInstance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsRequirementsKHR));
+    XR_CHECK(result, "Failed to get xrGetVulkanGraphicsRequirementsKHR");
+
+    result = xrGetVulkanGraphicsRequirementsKHR(oxrInstance, systemId, &requirements);
+    XR_CHECK(result, "Failed to get Vulkan graphics requirements");
+
+
+    spdlog::debug("Vulkan graphics requirements:");
+    spdlog::debug("  minApiVersionSupported: {}.{}.{}", XR_VERSION_MAJOR(requirements.minApiVersionSupported),
+                  XR_VERSION_MINOR(requirements.minApiVersionSupported), XR_VERSION_PATCH(requirements.minApiVersionSupported));
+    spdlog::debug("  maxApiVersionSupported: {}.{}.{}", XR_VERSION_MAJOR(requirements.maxApiVersionSupported),
+                  XR_VERSION_MINOR(requirements.maxApiVersionSupported), XR_VERSION_PATCH(requirements.maxApiVersionSupported));
+}
+
 void OXRContext::createSession(void *vkInstance, void *vkPhysicalDevice, void *vkDevice, uint32_t vkQueueFamilyIndex,
-    uint32_t vkQueueIndex) {
+                               uint32_t vkQueueIndex) {
     XrGraphicsBindingVulkanKHR graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR};
     graphicsBinding.instance = static_cast<VkInstance>(vkInstance);
     graphicsBinding.physicalDevice = static_cast<VkPhysicalDevice>(vkPhysicalDevice);

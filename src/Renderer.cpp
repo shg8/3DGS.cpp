@@ -116,7 +116,11 @@ void Renderer::recreatePipelines() {
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
 
-    context = std::make_shared<VulkanContext>(renderTarget->getRequiredInstanceExtensions(), renderTarget->getRequiredDeviceExtensions(),
+    auto deviceExtensions = renderTarget->getRequiredDeviceExtensions();
+    if (configuration.enableGui) {
+        deviceExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+    }
+    context = std::make_shared<VulkanContext>(renderTarget->getRequiredInstanceExtensions(), deviceExtensions,
                                               configuration.enableVulkanValidationLayers);
 
     context->createInstance();
@@ -363,7 +367,11 @@ void Renderer::createRenderPipeline() {
     auto outputSet = std::make_shared<DescriptorSet>(context, 1);
     for (auto &image: renderTarget->swapchainImages) {
         outputSet->bindImageToDescriptorSet(0, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute,
-                                            image);
+                                            image[0]);
+        if (image.isStereo) {
+            outputSet->bindImageToDescriptorSet(0, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute,
+                                            image[1]);
+        }
     }
     outputSet->build();
     renderPipeline->addDescriptorSet(0, inputSet);

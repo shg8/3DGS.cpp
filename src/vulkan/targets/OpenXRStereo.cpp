@@ -2,10 +2,13 @@
 #include "OpenXRStereo.h"
 
 vk::Extent2D OpenXRStereo::currentExtent() const {
-    return {};
+    auto [width, height] = configuration.getCurrentExtent();
+    assert(width > 0 && height > 0);
+    return {width, height};
 }
 
 std::pair<std::optional<uint32_t>, bool> OpenXRStereo::acquireNextImage() {
+
 }
 
 bool OpenXRStereo::present(const std::vector<vk::Semaphore> &waitSemaphores, uint32_t uint32) {

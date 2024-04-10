@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     auto pre = env::prefix("VKGS");
     auto validationLayers = pre.register_variable<bool>("VALIDATION_LAYERS");
     auto physicalDeviceId = pre.register_variable<uint8_t>("PHYSICAL_DEVICE");
-    auto immediateSwapchain = pre.register_variable<bool>("IMMEDIATE_SWAPCHAIN");
+    auto immediateSwapchainEnv = pre.register_variable<bool>("IMMEDIATE_SWAPCHAIN");
     auto envVars = pre.parse_and_validate();
 
     if (args::get(verboseFlag))
@@ -60,12 +60,13 @@ int main(int argc, char** argv)
         spdlog::set_level(spdlog::level::debug);
     }
 
+    bool immediateSwapchain = envVars.get_or(immediateSwapchainEnv, false);
+
     VulkanSplatting::RendererConfiguration config{
         envVars.get_or(validationLayers, false),
         envVars.get(physicalDeviceId).has_value()
             ? std::make_optional(envVars.get(physicalDeviceId).value())
             : std::nullopt,
-        envVars.get_or(immediateSwapchain, false),
         args::get(scenePath)
     };
 
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
 
     if (immediateSwapchainFlag)
     {
-        config.immediateSwapchain = args::get(immediateSwapchainFlag);
+        immediateSwapchain = args::get(immediateSwapchainFlag);
     }
 
     if (noGuiFlag)
@@ -106,7 +107,7 @@ int main(int argc, char** argv)
 #ifndef DEBUG
     try {
 #endif
-    auto renderer = VulkanSplatting(std::move(config), VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height, config.immediateSwapchain));
+    auto renderer = VulkanSplatting(std::move(config), VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height, immediateSwapchain));
     renderer.start();
 #ifndef DEBUG
     } catch (const std::exception& e) {

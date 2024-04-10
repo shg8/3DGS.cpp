@@ -168,8 +168,12 @@ void ImguiManager::draw(vk::CommandBuffer commandBuffer, uint32_t currentImageIn
     imguiFunction();
     ImGui::Render();
 
+    if (window->swapchainImages[currentImageIndex].isStereo) {
+        throw std::runtime_error("Stereo rendering is not supported");
+    }
+
     vk::RenderingAttachmentInfoKHR attachment_info{
-        window->swapchainImages[currentImageIndex]->imageView.get(), vk::ImageLayout::eColorAttachmentOptimal
+        window->swapchainImages[currentImageIndex].image->imageView.get(), vk::ImageLayout::eColorAttachmentOptimal
     };
     vk::RenderingInfoKHR rendering_info{{}, vk::Rect2D{{0, 0}, window->currentExtent()}, 1, {}, 1, &attachment_info};
     commandBuffer.beginRenderingKHR(rendering_info);
