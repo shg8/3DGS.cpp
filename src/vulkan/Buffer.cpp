@@ -23,7 +23,7 @@ void Buffer::alloc() {
     allocInfo.usage = vmaUsage;
     allocInfo.flags = flags;
 
-    VkBuffer vkBuffer;
+    VkBuffer vkBuffer = VK_NULL_HANDLE;
 
     VkResult res;
     if (alignment != 0) {
@@ -36,10 +36,15 @@ void Buffer::alloc() {
         throw std::runtime_error("Failed to create buffer");
     }
     buffer = vk::Buffer(vkBuffer);
+
+    if (context->validationLayersEnabled) {
+        context->device->setDebugUtilsObjectNameEXT(
+                vk::DebugUtilsObjectNameInfoEXT {vk::ObjectType::eBuffer, reinterpret_cast<uint64_t>(static_cast<VkBuffer>(buffer)), debugName.c_str()});
+    }
 }
 
 Buffer::Buffer(const std::shared_ptr<VulkanContext>& _context, uint32_t size, vk::BufferUsageFlags usage,
-               VmaMemoryUsage vmaUsage, VmaAllocationCreateFlags flags, bool shared, vk::DeviceSize alignment)
+               VmaMemoryUsage vmaUsage, VmaAllocationCreateFlags flags, bool shared, vk::DeviceSize alignment, std::string debugName)
     : context(_context),
       size(size),
       alignment(alignment),
@@ -47,7 +52,8 @@ Buffer::Buffer(const std::shared_ptr<VulkanContext>& _context, uint32_t size, vk
       usage(usage),
       vmaUsage(vmaUsage),
       flags(flags),
-      allocation(nullptr) {
+      allocation(nullptr),
+      debugName(std::move(debugName)) {
     alloc();
 }
 
@@ -159,12 +165,12 @@ std::shared_ptr<Buffer> Buffer::staging(std::shared_ptr<VulkanContext> context, 
 }
 
 std::shared_ptr<Buffer> Buffer::storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing,
-                                        vk::DeviceSize alignment) {
+                                        vk::DeviceSize alignment, std::string debugName) {
     return std::make_shared<Buffer>(context, size,
                                     vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst |
                                     vk::BufferUsageFlagBits::eTransferSrc,
                                     VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
-                                    concurrentSharing, alignment);
+                                    concurrentSharing, alignment, debugName);
 }
 
 void Buffer::assertEquals(char* data, size_t length) {

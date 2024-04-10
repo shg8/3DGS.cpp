@@ -233,13 +233,13 @@ void Renderer::createPrefixSumPipeline() {
 void Renderer::createRadixSortPipeline() {
     spdlog::debug("Creating radix sort pipeline");
     sortKBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier,
-                                      false);
+                                      false, 0, "sortKBufferEven");
     sortKBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier,
-                                     false);
+                                     false, 0, "sortKBufferOdd");
     sortVBufferEven = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier,
-                                      false);
+                                      false, 0, "sortVBufferEven");
     sortVBufferOdd = Buffer::storage(context, scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier,
-                                     false);
+                                     false, 0, "sortVBufferOdd");
 
     uint32_t globalInvocationSize = scene->getNumVertices() * sortBufferSizeMultiplier / numRadixSortBlocksPerWorkgroup;
     uint32_t remainder = scene->getNumVertices() * sortBufferSizeMultiplier % numRadixSortBlocksPerWorkgroup;
