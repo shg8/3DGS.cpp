@@ -62,6 +62,8 @@ public:
 
     void createGui();
 
+    void initializeCsvWriter();
+
     void initialize();
 
     void handleInput();
@@ -88,6 +90,7 @@ public:
 
 private:
     VulkanSplatting::RendererConfiguration configuration;
+    std::optional<CSVWriter> csvWriter = std::nullopt;
     std::shared_ptr<VulkanContext> context;
     std::shared_ptr<RenderTarget> renderTarget;
     std::shared_ptr<ImguiManager> imguiManager;
@@ -117,6 +120,8 @@ private:
     std::shared_ptr<Buffer> sortVBufferOdd;
 
     std::shared_ptr<DescriptorSet> inputSet;
+
+    uint32_t numInstances;
 
     std::atomic<bool> running = true;
 

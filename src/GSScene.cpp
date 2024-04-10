@@ -26,6 +26,17 @@ struct VertexStorage {
 void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
     auto startTime = std::chrono::high_resolution_clock::now();
 
+    // Check if the file is a folder
+    auto path = std::filesystem::path(filename);
+    if (std::filesystem::is_directory(filename)) {
+        // Check if cameras.json exists
+        auto camerasPath = path / "cameras.json";
+        if (std::filesystem::exists(camerasPath)) {
+            spdlog::info("Dataset folder detected, loading cameras.json");
+            assert(false && "Not implemented");
+        }
+    }
+
     std::ifstream plyFile(filename, std::ios::binary);
     loadPlyHeader(plyFile);
 

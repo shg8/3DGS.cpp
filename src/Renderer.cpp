@@ -20,6 +20,7 @@
 #include "vulkan/targets/OpenXRStereo.h"
 
 void Renderer::initialize() {
+    initializeCsvWriter();
     initializeVulkan();
     createGui();
     loadSceneToGPU();
@@ -99,6 +100,13 @@ void Renderer::retrieveTimestamps() {
     for (auto &metric: metrics) {
         if (configuration.enableGui)
             guiManager.pushMetric(metric.first, metric.second / 1000000.0);
+    }
+
+    if (csvWriter) {
+        metrics["num_instances"] = numInstances;
+        metrics["timestamp"] = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        csvWriter.value().log(metrics);
     }
 }
 
@@ -221,6 +229,28 @@ void Renderer::createGui() {
     imguiManager = std::make_shared<ImguiManager>(context, renderTarget);
     imguiManager->init();
     guiManager.init();
+}
+
+void Renderer::initializeCsvWriter() {
+    auto folder = configuration.benchmarkOutputFolder;
+    // Create folder if it does not exist
+    if (!folder.has_value()) {
+        return;
+    }
+
+    std::filesystem::create_directories(folder.value());
+
+    const auto path = std::filesystem::path(folder.value());
+
+    // Format the date and time
+    const auto now = std::chrono::system_clock::now();
+    const auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S");
+    const auto time = ss.str();
+
+    const auto filename = path / (time + ".csv");
+    csvWriter = std::move(CSVWriter(filename.string()));
 }
 
 void Renderer::createPrefixSumPipeline() {
@@ -538,9 +568,9 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
             vk::CommandBufferAllocateInfo(commandPool.get(), vk::CommandBufferLevel::ePrimary, 1))[0]);
     }
 
-    uint32_t numInstances = totalSumBufferHost->readOne<uint32_t>();
+    numInstances = totalSumBufferHost->readOne<uint32_t>();
     // spdlog::debug("Num instances: {}", numInstances);
-    guiManager.pushTextMetric("instances", numInstances);
+    guiManager.pushTextMetric("instances", static_cast<float>(numInstances));
     if (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {
         auto old = sortBufferSizeMultiplier;
         while (numInstances > scene->getNumVertices() * sortBufferSizeMultiplier) {

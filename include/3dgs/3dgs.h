@@ -16,6 +16,7 @@ public:
         bool enableVulkanValidationLayers = false;
         std::optional<uint8_t> physicalDeviceId = std::nullopt;
         std::string scene;
+        std::optional<std::string> benchmarkOutputFolder = std::nullopt;
 
         float fov = 45.0f;
         float near = 0.2f;

@@ -81,6 +81,7 @@ add_library(3dgs_cpp STATIC
         vulkan/targets/OpenXRStereo.h
         vulkan/targets/ManagedSwapchain.cpp
         vulkan/targets/ManagedSwapchain.h
+        utils/CSVWriter.h
 )
 
 target_include_directories(3dgs_cpp
