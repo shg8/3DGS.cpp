@@ -7,7 +7,6 @@
 #include <sstream>
 #include <unordered_map>
 #include <cstdint>
-#include <ranges>
 
 class CSVWriter {
 private:
@@ -57,8 +56,8 @@ public:
 
     void log(const std::unordered_map<std::string, uint64_t>& row) {
         if (columns.empty()) {
-            for (const auto& columnName : std::ranges::views::keys(row)) {
-                columns.push_back(columnName);
+            for (const auto& [key, value] : row) {
+                columns.push_back(key);
             }
             log(columns);
         }
