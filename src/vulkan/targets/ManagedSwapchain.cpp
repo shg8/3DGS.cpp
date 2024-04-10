@@ -1,6 +1,6 @@
 #include "ManagedSwapchain.h"
 
-#include <vk_enum_string_helper.h>
+#include <vulkan/vk_enum_string_helper.h>
 #include <spdlog/spdlog.h>
 
 ManagedSwapchain::ManagedSwapchain(bool immediate) : immediate(immediate){

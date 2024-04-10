@@ -17,7 +17,9 @@
 #include <spdlog/spdlog.h>
 
 #include "vulkan/targets/ManagedSwapchain.h"
+#ifdef VKGS_ENABLE_OPENXR
 #include "vulkan/targets/OpenXRStereo.h"
+#endif
 
 void Renderer::initialize() {
     initializeCsvWriter();
@@ -168,11 +170,13 @@ void Renderer::initializeVulkan() {
         renderFinishedSemaphores[i] = context->device->createSemaphoreUnique(vk::SemaphoreCreateInfo());
     }
 
+#ifdef VKGS_ENABLE_OPENXR
     if (auto openXRBackend = std::dynamic_pointer_cast<OpenXRStereo>(renderTarget)) {
         openXRBackend->postVulkanInit(context->instance.get(), context->physicalDevice, context->device.get(),
                                        context->queues[VulkanContext::Queue::GRAPHICS].queueFamily,
                                        context->queues[VulkanContext::Queue::GRAPHICS].queueIndex);
     }
+#endif
 }
 
 void Renderer::loadSceneToGPU() {

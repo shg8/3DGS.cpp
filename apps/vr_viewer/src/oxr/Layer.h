@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <optional>
 
 #include "OXRContext.h"
 #include <openxr/openxr_platform.h>

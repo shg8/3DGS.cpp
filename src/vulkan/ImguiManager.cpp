@@ -132,9 +132,9 @@ void ImguiManager::init() {
     init_info.ImageCount = window->imageCount + 1;
     init_info.UseDynamicRendering = true;
     init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-    init_info.PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfo{
+    init_info.PipelineRenderingCreateInfo = static_cast<VkPipelineRenderingCreateInfoKHR>(vk::PipelineRenderingCreateInfoKHR {
         {}, 1, &window->swapchainFormat
-    };
+    });
 
     ImGui_ImplVulkan_Init(&init_info);
 

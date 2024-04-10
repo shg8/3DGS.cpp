@@ -1,6 +1,8 @@
 #include "3dgs.h"
 #include "Renderer.h"
+#ifdef VKGS_ENABLE_OPENXR
 #include "vulkan/targets/OpenXRStereo.h"
+#endif
 
 #ifdef VKGS_ENABLE_GLFW
 #include "vulkan/targets/GLFWWindow.h"
@@ -25,10 +27,12 @@ std::shared_ptr<RenderTarget> VulkanSplatting::createMetalWindow(void *caMetalLa
 }
 #endif
 
+#ifdef VKGS_ENABLE_OPENXR
 std::shared_ptr<RenderTarget> VulkanSplatting::createOpenXRRenderTarget(OpenXRConfiguration configuration) {
     auto target = std::make_shared<OpenXRStereo>(configuration);
     return target;
 }
+#endif
 
 void VulkanSplatting::start() {
     // Create the renderer

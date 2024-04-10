@@ -52,7 +52,7 @@ VulkanContext::VulkanContext(const std::vector<std::string>& instance_extensions
     }
 
 #ifndef VKGS_ENABLE_METAL
-    VULKAN_HPP_DEFAULT_DISPATCHER.init();
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(&vkGetInstanceProcAddr);
 #else
     void *libvulkan = dlopen("MoltenVK.framework/MoltenVK", RTLD_NOW | RTLD_LOCAL);
     if (!libvulkan) {

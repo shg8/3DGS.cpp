@@ -2,7 +2,7 @@
 
 #include "Utils.h"
 #include "spdlog/spdlog.h"
-#include "vk_enum_string_helper.h"
+#include <vulkan/vk_enum_string_helper.h>
 
 namespace OXR {
     Layer::Layer(std::shared_ptr<OXRContext> context, XrCompositionLayerFlags flags, bool depth_enabled) : depthEnabled(
