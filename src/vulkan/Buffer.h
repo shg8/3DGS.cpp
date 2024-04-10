@@ -13,7 +13,7 @@ class DescriptorSet;
 class Buffer : public std::enable_shared_from_this<Buffer> {
 public:
     Buffer(const std::shared_ptr<VulkanContext>& context, uint32_t size, vk::BufferUsageFlags usage, VmaMemoryUsage vmaUsage,
-           VmaAllocationCreateFlags flags, bool concurrentSharing = false, VkDeviceSize alignment = 0);
+           VmaAllocationCreateFlags flags, bool concurrentSharing = false, VkDeviceSize alignment = 0, std::string debugName = "Unnamed");
 
     Buffer(const Buffer &) = delete;
 
@@ -33,7 +33,8 @@ public:
 
     static std::shared_ptr<Buffer> staging(std::shared_ptr<VulkanContext> context, unsigned long size);
 
-    static std::shared_ptr<Buffer> storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing = false, vk::DeviceSize alignment = 0);
+    static std::shared_ptr<Buffer> storage(std::shared_ptr<VulkanContext> context, uint64_t size, bool concurrentSharing = false, vk::DeviceSize alignment = 0, std
+                                           ::string debugName = "Unnamed Storage Buffer");
 
     void upload(const void *data, uint32_t size, uint32_t offset = 0);
 
@@ -82,6 +83,7 @@ private:
     std::shared_ptr<VulkanContext> context;
 
     std::vector<std::tuple<std::weak_ptr<DescriptorSet>, uint32_t, uint32_t, vk::DescriptorType>> boundDescriptorSets;
+    std::string debugName;
 };
 
 
