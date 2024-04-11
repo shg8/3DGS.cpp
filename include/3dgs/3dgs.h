@@ -16,7 +16,7 @@ public:
         bool enableVulkanValidationLayers = false;
         std::optional<uint8_t> physicalDeviceId = std::nullopt;
         std::string scene;
-        std::optional<std::string> benchmarkOutputFolder = std::nullopt;
+        std::optional<std::string> benchmarkOutput = std::nullopt;
 
         float fov = 45.0f;
         float near = 0.2f;
@@ -27,7 +27,7 @@ public:
     explicit VulkanSplatting(RendererConfiguration configuration, std::shared_ptr<RenderTarget> renderTarget);
 
 #ifdef VKGS_ENABLE_GLFW
-    static std::shared_ptr<RenderTarget> createGlfwWindow(std::string name, int width, int height, bool immediate);
+    static std::shared_ptr<RenderTarget> createGlfwWindow(std::string name, int width, int height, bool immediate, bool fixedSize = false);
 #endif
 
 #ifdef VKGS_ENABLE_METAL

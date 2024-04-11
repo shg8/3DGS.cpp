@@ -3,11 +3,15 @@
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 
-GLFWWindow::GLFWWindow(std::string name, int width, int height, bool immediate): ManagedSwapchain(immediate) {
+GLFWWindow::GLFWWindow(std::string name, int width, int height, bool immediate, bool fixedSize): ManagedSwapchain(immediate) {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    if (fixedSize) {
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    } else {
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    }
 
     window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 }

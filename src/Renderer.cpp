@@ -36,6 +36,21 @@ void Renderer::initialize() {
     recordPreprocessCommandBuffer();
 }
 
+void Renderer::snapToNearestCamera() {
+    auto position = camera.position;
+    auto targetCamera = scene->cameras[0];
+    auto minDistance = glm::distance(targetCamera.position, position);
+    for (const auto &camera: scene->cameras) {
+          auto distance = glm::distance(camera.position, position);
+          if (distance < minDistance) {
+                minDistance = distance;
+                targetCamera = camera;
+          }
+    }
+    camera.position = targetCamera.position;
+    camera.rotation = targetCamera.rotation;
+}
+
 void Renderer::handleInput() {
     auto translation = renderTarget->getCursorTranslation();
     auto keys = renderTarget->getKeys(); // W, A, S, D
@@ -86,6 +101,36 @@ void Renderer::handleInput() {
             camera.position += (glm::mat4_cast(camera.rotation) * glm::vec4(direction, 1.0f)).xyz() * 0.3f;
         }
     }
+
+    if (guiManager.wantToSnapCamera()) {
+        snapToNearestCamera();
+    }
+}
+
+void Renderer::handleBenchmarkInput() {
+    if (benchmarkCurrentCameraIndex == -1 && benchmarkCurrentFrame <= 100) {
+        benchmarkCurrentFrame++;
+        return;
+    }
+
+    if (benchmarkCurrentCameraIndex == -1) {
+        benchmarkCurrentFrame = 0;
+        benchmarkCurrentCameraIndex = 0;
+    }
+
+    if (benchmarkCurrentFrame <= 10) {
+        benchmarkCurrentFrame++;
+        return;
+    }
+
+    if (benchmarkCurrentCameraIndex < scene->cameras.size()) {
+        camera.position = scene->cameras[benchmarkCurrentCameraIndex].position;
+        camera.rotation = scene->cameras[benchmarkCurrentCameraIndex].rotation;
+        benchmarkCurrentFrame = 0;
+        benchmarkCurrentCameraIndex++;
+    } else {
+        stop();
+    }
 }
 
 void Renderer::retrieveTimestamps() {
@@ -121,7 +166,7 @@ void Renderer::recreatePipelines() {
     recordPreprocessCommandBuffer();
     createRenderPipeline();
     return;
-}
+}\
 
 void Renderer::initializeVulkan() {
     spdlog::debug("Initializing Vulkan");
@@ -236,25 +281,30 @@ void Renderer::createGui() {
 }
 
 void Renderer::initializeCsvWriter() {
-    auto folder = configuration.benchmarkOutputFolder;
+    auto output = configuration.benchmarkOutput;
     // Create folder if it does not exist
-    if (!folder.has_value()) {
+    if (!output.has_value()) {
         return;
     }
 
-    std::filesystem::create_directories(folder.value());
+    // Check if output has file extension csv
+    if (output.value().find(".csv") == std::string::npos) {
+        std::filesystem::create_directories(output.value());
 
-    const auto path = std::filesystem::path(folder.value());
+        const auto path = std::filesystem::path(output.value());
 
-    // Format the date and time
-    const auto now = std::chrono::system_clock::now();
-    const auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S");
-    const auto time = ss.str();
+        // Format the date and time
+        const auto now = std::chrono::system_clock::now();
+        const auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S");
+        const auto time = ss.str();
 
-    const auto filename = path / (time + ".csv");
-    csvWriter = std::move(CSVWriter(filename.string()));
+        const auto filename = path / (time + ".csv");
+        csvWriter = std::move(CSVWriter(filename.string()));
+    } else {
+        csvWriter = std::move(CSVWriter(output.value()));
+    }
 }
 
 void Renderer::createPrefixSumPipeline() {
@@ -432,7 +482,11 @@ void Renderer::draw() {
     currentImageIndex = optionalImageIndex.value();
 
 startOfRenderLoop:
-    handleInput();
+    if (configuration.benchmarkOutput) {
+        handleBenchmarkInput();
+    } else {
+        handleInput();
+    }
 
     updateUniforms();
 

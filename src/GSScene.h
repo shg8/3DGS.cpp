@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <iostream>
 #include <glm/glm.hpp>
+#include <glm/detail/type_quat.hpp>
+
 #include "vulkan/VulkanContext.h"
 #include "vulkan/Buffer.h"
 
@@ -22,6 +24,11 @@ struct PlyHeader {
 
 class GSScene {
 public:
+    struct Camera {
+        glm::vec3 position;
+        glm::quat rotation;
+    };
+
     explicit GSScene(const std::string& filename)
         : filename(filename) {
         // check if file exists
@@ -29,6 +36,10 @@ public:
             throw std::runtime_error("File does not exist: " + filename);
         }
     }
+
+    void parseCameras(std::filesystem::path::iterator::reference path);
+
+    void findPlyFile(std::filesystem::path::iterator::reference path);
 
     void load(const std::shared_ptr<VulkanContext>& context);
 
@@ -51,6 +62,7 @@ public:
 
     std::shared_ptr<Buffer> vertexBuffer;
     std::shared_ptr<Buffer> cov3DBuffer;
+    std::vector<Camera> cameras;
 private:
     std::string filename;
     PlyHeader header;

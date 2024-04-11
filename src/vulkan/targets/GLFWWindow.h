@@ -6,7 +6,7 @@
 
 class GLFWWindow final : public ManagedSwapchain {
 public:
-    GLFWWindow(std::string name, int width, int height, bool immediate);
+    GLFWWindow(std::string name, int width, int height, bool immediate, bool fixedSize = false);
 
 protected:
     [[nodiscard]] std::pair<uint32_t, uint32_t> getFramebufferSize() override;

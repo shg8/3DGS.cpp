@@ -15,8 +15,8 @@ VulkanSplatting::VulkanSplatting(RendererConfiguration configuration,
 
 }
 
-std::shared_ptr<RenderTarget> VulkanSplatting::createGlfwWindow(std::string name, int width, int height, bool immediate) {
-    return std::make_shared<GLFWWindow>(name, width, height, immediate);
+std::shared_ptr<RenderTarget> VulkanSplatting::createGlfwWindow(std::string name, int width, int height, bool immediate, bool fixedSize) {
+    return std::make_shared<GLFWWindow>(name, width, height, immediate, fixedSize);
 }
 #endif
 

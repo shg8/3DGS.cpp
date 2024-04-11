@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
     if (benchmarkOutputFolderFlag)
     {
-        config.benchmarkOutputFolder = std::make_optional(args::get(benchmarkOutputFolderFlag));
+        config.benchmarkOutput = std::make_optional(args::get(benchmarkOutputFolderFlag));
     }
 
     auto width = widthFlag ? args::get(widthFlag) : 1280;
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 #ifndef DEBUG
     try {
 #endif
-    auto renderer = VulkanSplatting(std::move(config), VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height, immediateSwapchain));
+    auto renderer = VulkanSplatting(std::move(config), VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height, immediateSwapchain, config.benchmarkOutput.has_value()));
     renderer.start();
 #ifndef DEBUG
     } catch (const std::exception& e) {

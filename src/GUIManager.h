@@ -23,7 +23,11 @@ public:
 
     static bool wantCaptureKeyboard();
 
+    bool wantToSnapCamera();
+
     bool mouseCapture = false;
+
+    bool requestCameraSnap = false;
 
 };
 

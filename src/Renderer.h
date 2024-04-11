@@ -66,7 +66,11 @@ public:
 
     void initialize();
 
+    void snapToNearestCamera();
+
     void handleInput();
+
+    void handleBenchmarkInput();
 
     void retrieveTimestamps();
 
@@ -146,6 +150,9 @@ private:
     std::chrono::high_resolution_clock::time_point lastFpsTime = std::chrono::high_resolution_clock::now();
 
     unsigned int sortBufferSizeMultiplier = 1;
+
+    int benchmarkCurrentCameraIndex = -1;
+    int benchmarkCurrentFrame = 0;
 
     void initializeVulkan();
 

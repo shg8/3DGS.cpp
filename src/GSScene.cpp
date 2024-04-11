@@ -14,6 +14,12 @@
 #include "spdlog/spdlog.h"
 #include "vulkan/Shader.h"
 
+#include "third_party/json.hpp"
+
+#include <glm/gtc/quaternion.hpp>
+
+using json = nlohmann::json;
+
 struct VertexStorage {
     glm::vec3 position;
     glm::vec3 normal;
@@ -22,6 +28,53 @@ struct VertexStorage {
     glm::vec3 scale;
     glm::vec4 rotation;
 };
+
+void GSScene::parseCameras(std::filesystem::path::iterator::reference path) {
+    std::ifstream camerasFile(path);
+    json data = json::parse(camerasFile);
+
+    for (const auto &[key, value]: data.items()) {
+        auto position = value["position"];
+        auto rotation = value["rotation"];
+        auto rotMat = glm::mat3(
+            glm::vec3(rotation[0][0], rotation[1][0], rotation[2][0]),
+            -glm::vec3(rotation[0][1], rotation[1][1], rotation[2][1]),
+            -glm::vec3(rotation[0][2], rotation[1][2], rotation[2][2])
+        );
+        cameras.emplace_back(glm::vec3(position[0], position[1], position[2]), glm::quat(rotMat));
+    }
+}
+
+void GSScene::findPlyFile(std::filesystem::path::iterator::reference path) {
+    // ply files are under point_cloud/iteration_*/point_cloud.ply
+    // find the latest iteration
+    std::filesystem::path latestIteration;
+    int latestIterationNumber = -1;
+    for (const auto &entry: std::filesystem::directory_iterator(path / "point_cloud")) {
+        if (entry.is_directory()) {
+            auto iteration = entry.path().filename().string();
+            try {
+                // substr(10) to remove "iteration_" prefix
+                int iterationNumber = std::stoi(iteration.substr(10));
+                if (iterationNumber > latestIterationNumber) {
+                    latestIterationNumber = iterationNumber;
+                    latestIteration = entry.path();
+                }
+            } catch (std::invalid_argument &e) {
+                // ignore
+            }
+        }
+    }
+
+    filename = latestIteration / "point_cloud.ply";
+
+    spdlog::info("Found ply file: {}", filename);
+
+    if (!std::filesystem::exists(filename)) {
+        spdlog::critical("File does not exist: {}", filename);
+        throw std::runtime_error("File does not exist: " + filename);
+    }
+}
 
 void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -33,8 +86,13 @@ void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
         auto camerasPath = path / "cameras.json";
         if (std::filesystem::exists(camerasPath)) {
             spdlog::info("Dataset folder detected, loading cameras.json");
-            assert(false && "Not implemented");
+
+            parseCameras(camerasPath);
+        } else {
+            spdlog::critical("cameras.json not found in dataset folder: {}", camerasPath.string());
+            throw std::runtime_error("cameras.json not found in dataset folder: " + camerasPath.string());
         }
+        findPlyFile(path);
     }
 
     std::ifstream plyFile(filename, std::ios::binary);
@@ -42,7 +100,12 @@ void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
 
     vertexBuffer = createBuffer(context, header.numVertices * sizeof(Vertex));
     auto vertexStagingBuffer = Buffer::staging(context, header.numVertices * sizeof(Vertex));
-    auto* verteces = static_cast<Vertex *>(vertexStagingBuffer->allocation_info.pMappedData);
+    auto* vertexStagingBufferPtr = static_cast<Vertex *>(vertexStagingBuffer->allocation_info.pMappedData);
+
+    std::vector<Vertex> vertices(header.numVertices);
+
+    auto posMin = glm::vec3(std::numeric_limits<float>::max());
+    auto posMax = glm::vec3(std::numeric_limits<float>::min());
 
     for (auto i = 0; i < header.numVertices; i++) {
         static_assert(sizeof(VertexStorage) == 62 * sizeof(float));
@@ -50,24 +113,50 @@ void GSScene::load(const std::shared_ptr<VulkanContext>&context) {
         assert(!plyFile.eof());
         VertexStorage vertexStorage;
         plyFile.read(reinterpret_cast<char *>(&vertexStorage), sizeof(VertexStorage));
-        verteces[i].position = glm::vec4(vertexStorage.position, 1.0f);
+        vertices[i].position = glm::vec4(vertexStorage.position, 1.0f);
+        posMin = glm::min(posMin, vertexStorage.position);
+        posMax = glm::max(posMax, vertexStorage.position);
         // verteces[i].normal = glm::vec4(vertexStorage.normal, 0.0f);
-        verteces[i].scale_opacity = glm::vec4(glm::exp(vertexStorage.scale), 1.0f / (1.0f + std::exp(-vertexStorage.opacity)));
-        verteces[i].rotation = normalize(vertexStorage.rotation);
+        vertices[i].scale_opacity = glm::vec4(glm::exp(vertexStorage.scale), 1.0f / (1.0f + std::exp(-vertexStorage.opacity)));
+        vertices[i].rotation = normalize(vertexStorage.rotation);
         // memcpy(verteces[i].shs, vertexStorage.shs, 48 * sizeof(float));
-        verteces[i].shs[0] = vertexStorage.shs[0];
-        verteces[i].shs[1] = vertexStorage.shs[1];
-        verteces[i].shs[2] = vertexStorage.shs[2];
+        vertices[i].shs[0] = vertexStorage.shs[0];
+        vertices[i].shs[1] = vertexStorage.shs[1];
+        vertices[i].shs[2] = vertexStorage.shs[2];
         auto SH_N = 16;
         for (auto j = 1; j < SH_N; j++) {
-            verteces[i].shs[j * 3 + 0] = vertexStorage.shs[(j - 1) + 3];
-            verteces[i].shs[j * 3 + 1] = vertexStorage.shs[(j - 1) + SH_N + 2];
-            verteces[i].shs[j * 3 + 2] = vertexStorage.shs[(j - 1) + SH_N * 2 + 1];
+            vertices[i].shs[j * 3 + 0] = vertexStorage.shs[(j - 1) + 3];
+            vertices[i].shs[j * 3 + 1] = vertexStorage.shs[(j - 1) + SH_N + 2];
+            vertices[i].shs[j * 3 + 2] = vertexStorage.shs[(j - 1) + SH_N * 2 + 1];
         }
         assert(vertexStorage.normal.x == 0.0f);
         assert(vertexStorage.normal.y == 0.0f);
         assert(vertexStorage.normal.z == 0.0f);
     }
+
+    std::sort(vertices.begin(), vertices.end(), [&](const Vertex &a, const Vertex &b) {
+        auto relAPos = (glm::vec3(a.position) - posMin) / (posMax - posMin);
+        auto relBPos = (glm::vec3(b.position) - posMin) / (posMax - posMin);
+        auto scaledRelAPos = static_cast<float>((1 << 21) - 1) * relAPos;
+        auto scaledRelBPos = static_cast<float>((1 << 21) - 1) * relBPos;
+
+        uint64_t codeA = 0;
+        uint64_t codeB = 0;
+        for (auto i = 0; i < 21; i++) {
+            codeA |= (static_cast<uint64_t>(scaledRelAPos.x) & (1 << i)) << (i * 2 + 0);
+            codeA |= (static_cast<uint64_t>(scaledRelAPos.y) & (1 << i)) << (i * 2 + 1);
+            codeA |= (static_cast<uint64_t>(scaledRelAPos.z) & (1 << i)) << (i * 2 + 2);
+
+            codeB |= (static_cast<uint64_t>(scaledRelBPos.x) & (1 << i)) << (i * 2 + 0);
+            codeB |= (static_cast<uint64_t>(scaledRelBPos.y) & (1 << i)) << (i * 2 + 1);
+            codeB |= (static_cast<uint64_t>(scaledRelBPos.z) & (1 << i)) << (i * 2 + 2);
+        }
+
+        return codeA < codeB;
+    });
+
+    // copy vertices to staging buffer
+    memcpy(vertexStagingBufferPtr, vertices.data(), header.numVertices * sizeof(Vertex));
 
     vertexBuffer->uploadFrom(vertexStagingBuffer);
 
