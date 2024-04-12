@@ -145,6 +145,10 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
         spdlog::info("[{}] {}", ind++, device.getProperties().deviceName);
     }
 
+    if (surface.has_value()) {
+        deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    }
+
     if (id.has_value()) {
         if (devices.size() <= id.value()) {
             throw std::runtime_error("Invalid physical device id");
@@ -152,10 +156,6 @@ void VulkanContext::selectPhysicalDevice(std::optional<uint8_t> id, std::optiona
         physicalDevice = devices[id.value()];
         spdlog::info("Selected physical device (by index): {}", physicalDevice.getProperties().deviceName);
         return;
-    }
-
-    if (surface.has_value()) {
-        deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
 
     auto suitableDevices = std::vector<vk::PhysicalDevice>{};
