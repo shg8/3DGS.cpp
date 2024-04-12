@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
         parser, "validation-layers", "Enable Vulkan validation layers", {"validation"}
     };
     args::Flag verboseFlag{parser, "verbose", "Enable verbose logging", {'v', "verbose"}};
-    args::ValueFlag<uint8_t> physicalDeviceIdFlag{
+    args::ValueFlag<uint32_t> physicalDeviceIdFlag{
         parser, "physical-device", "Select physical device by index", {'d', "device"}
     };
     args::Flag immediateSwapchainFlag{
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     }
 
     if (physicalDeviceIdFlag) {
-        config.physicalDeviceId = std::make_optional<uint8_t>(args::get(physicalDeviceIdFlag));
+        config.physicalDeviceId = std::make_optional<uint8_t>(static_cast<uint8_t>(args::get(physicalDeviceIdFlag)));
     }
 
     if (immediateSwapchainFlag) {
