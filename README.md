@@ -90,7 +90,7 @@ After installing the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/), please pr
 Please feel free to open an issue if you have any feature suggestions or are interested in contributing.
 
 ## Benchmarking
-There is room for performance improvements. See benchmarks on a 4090.
+There is room for performance improvements. See benchmarks on a 4090 at 3200x1400.
 ![cumulative_duration](https://github.com/shg8/3DGS.cpp/assets/38004233/91e6a082-95ec-430d-bbbb-cbb3f63795e0)
 
 ## Contributing
