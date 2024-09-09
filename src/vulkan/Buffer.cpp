@@ -116,12 +116,12 @@ void Buffer::downloadTo(std::shared_ptr<Buffer> buffer, vk::DeviceSize srcOffset
 }
 
 Buffer::~Buffer() {
-    vmaDestroyBuffer(context->allocator, buffer, allocation);
+    vmaDestroyBuffer(context->allocator, static_cast<VkBuffer>(buffer), allocation);
     spdlog::debug("Buffer destroyed");
 }
 
 void Buffer::realloc(uint64_t newSize) {
-    vmaDestroyBuffer(context->allocator, buffer, allocation);
+    vmaDestroyBuffer(context->allocator, static_cast<VkBuffer>(buffer), allocation);
 
     size = newSize;
     alloc();
