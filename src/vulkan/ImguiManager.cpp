@@ -127,7 +127,7 @@ void ImguiManager::init() {
     init_info.Device = context->device.get();
     init_info.QueueFamily = context->queues[VulkanContext::Queue::GRAPHICS].queueFamily;
     init_info.Queue = context->queues[VulkanContext::Queue::GRAPHICS].queue;
-    init_info.DescriptorPool = descriptorPool.get();
+    init_info.DescriptorPool = static_cast<VkDescriptorPool>(descriptorPool.get());
     init_info.MinImageCount = 2;
     init_info.ImageCount = swapchain->imageCount + 1;
     init_info.UseDynamicRendering = true;
