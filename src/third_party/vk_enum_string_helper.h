@@ -7,6 +7,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#ifndef VK_DRIVER_ID_MESA_AGXV
+#define VK_DRIVER_ID_MESA_AGXV 99999
+#endif
+
+#ifndef VK_BUFFER_USAGE_2_EXECUTION_GRAPH_SCRATCH_BIT_AMDX
+#define VK_BUFFER_USAGE_2_EXECUTION_GRAPH_SCRATCH_BIT_AMDX 99999
+#endif
+
 #ifdef __cplusplus
 #include <string>
 #endif
