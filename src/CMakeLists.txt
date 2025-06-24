@@ -38,6 +38,7 @@ target_include_directories(3dgs_cpp
         ${imgui_SOURCE_DIR}/backends
         ${spdlog_SOURCE_DIR}/include
         ${CMAKE_BINARY_DIR}/shaders
+        ${stb_SOURCE_DIR}
 )
 
 add_dependencies(3dgs_cpp shaders)

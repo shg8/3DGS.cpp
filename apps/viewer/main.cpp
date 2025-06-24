@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
     args::ValueFlag<uint32_t> widthFlag{parser, "width", "Set window width", {'w', "width"}};
     args::ValueFlag<uint32_t> heightFlag{parser, "height", "Set window height", {'h', "height"}};
     args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", { "no-gui"}};
+    args::ValueFlag<std::string> outputFlag{parser, "output", "Output image path for headless rendering", {'o', "output"}};
     args::Positional<std::string> scenePath{parser, "scene", "Path to scene file", "scene.ply"};
 
     try {
@@ -86,10 +87,20 @@ int main(int argc, char** argv) {
         config.enableGui = true;
     }
 
+    if (outputFlag) {
+        config.outputPath = args::get(outputFlag);
+        config.enableGui = false;
+    }
+
     auto width = widthFlag ? args::get(widthFlag) : 1280;
     auto height = heightFlag ? args::get(heightFlag) : 720;
 
-    config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
+    if (outputFlag) {
+        // For headless mode, we still need a window but make it invisible
+        config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting (Headless)", width, height);
+    } else {
+        config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
+    }
 
 #ifndef DEBUG
     try {

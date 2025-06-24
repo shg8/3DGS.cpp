@@ -20,6 +20,7 @@ public:
         float near = 0.2f;
         float far = 1000.0f;
         bool enableGui = false;
+        std::optional<std::string> outputPath = std::nullopt;
 
         std::shared_ptr<Window> window;
     };

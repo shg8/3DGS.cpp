@@ -13,6 +13,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "vulkan/Utils.h"
+#include "ImageSaver.h"
 
 #include <spdlog/spdlog.h>
 
@@ -426,6 +427,11 @@ startOfRenderLoop:
 }
 
 void Renderer::run() {
+    if (configuration.outputPath.has_value()) {
+        renderOnceAndSave();
+        return;
+    }
+
     while (running) {
         if (!window->tick()) {
             break;
@@ -751,6 +757,58 @@ void Renderer::updateUniforms() {
     data.tan_fovx = tan_fovx;
     data.tan_fovy = tan_fovy;
     uniformBuffer->upload(&data, sizeof(UniformBuffer), 0);
+}
+
+
+void Renderer::renderOnceAndSave() {
+    // Headless rendering - simulate the normal draw loop but without presentation
+    
+    // Simulate normal frame acquisition 
+    context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
+    context->device->resetFences(inflightFences[0].get());
+    
+    // Use first swapchain image
+    currentImageIndex = 0;
+
+    handleInput();
+    updateUniforms();
+
+    // Submit preprocessing (same as normal draw())
+    auto submitInfo = vk::SubmitInfo{}.setCommandBuffers(preprocessCommandBuffer.get());
+    context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
+
+    auto ret = context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
+    if (ret != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to wait for fence");
+    }
+    context->device->resetFences(inflightFences[0].get());
+
+    // Record render command buffer (same as normal draw())
+    if (!recordRenderCommandBuffer(0)) {
+        // If buffer reallocation happened, we need to try again next frame
+        // In headless mode, just skip this and try once more
+        spdlog::warn("Buffer reallocation occurred, retrying render...");
+        
+        submitInfo = vk::SubmitInfo{}.setCommandBuffers(preprocessCommandBuffer.get());
+        context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
+        
+        ret = context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
+        if (ret != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed to wait for fence");
+        }
+        context->device->resetFences(inflightFences[0].get());
+        
+        if (!recordRenderCommandBuffer(0)) {
+            throw std::runtime_error("Failed to record render command buffer after retry");
+        }
+    }
+    
+    // Submit render commands (without presentation)
+    submitInfo = vk::SubmitInfo{}.setCommandBuffers(renderCommandBuffer.get());
+    context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
+    
+    context->device->waitIdle();
+    ImageSaver::saveImage(context, swapchain->swapchainImages[currentImageIndex], configuration.outputPath.value());
 }
 
 Renderer::~Renderer() {
