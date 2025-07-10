@@ -89,6 +89,8 @@ void GUIManager::buildGui() {
     ImGui::Text("WASD: move");
     ImGui::Text("Space: up");
     ImGui::Text("Shift: down");
+    ImGui::Text("Q: rotate left");
+    ImGui::Text("E: rotate right");
     ImGui::Text("Left click: capture mouse");
     ImGui::Text("ESC: release mouse");
     ImGui::Text("Mouse captured: %s", mouseCapture ? "true" : "false");

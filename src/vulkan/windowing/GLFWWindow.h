@@ -17,7 +17,7 @@ public:
 
     std::array<double, 2> getCursorTranslation() override;
 
-    std::array<bool, 7> getKeys() override;
+    std::array<bool, 9> getKeys() override;
 
     void mouseCapture(bool capture) override;
 

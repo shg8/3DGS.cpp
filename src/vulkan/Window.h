@@ -19,7 +19,7 @@ public:
 
     virtual std::array<double, 2> getCursorTranslation() { return {0, 0}; }
 
-    virtual std::array<bool, 7> getKeys() { return {false, false, false, false, false, false, false}; }
+    virtual std::array<bool, 9> getKeys() { return {false, false, false, false, false, false, false, false, false}; }
 
     virtual void mouseCapture(bool capture) { }
 

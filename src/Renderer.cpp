@@ -75,6 +75,12 @@ void Renderer::handleInput() {
             window->mouseCapture(false);
             guiManager.mouseCapture = false;
         }
+        if (keys[7]) {
+            camera.rotation = glm::rotate(camera.rotation, -0.05f, glm::vec3(0.0f, 0.0f, 1.0f));
+        }
+        if (keys[8]) {
+            camera.rotation = glm::rotate(camera.rotation, 0.05f, glm::vec3(0.0f, 0.0f, 1.0f));
+        }
         if (direction != glm::vec3(0.0f, 0.0f, 0.0f)) {
             direction = glm::normalize(direction);
             camera.position += (glm::mat4_cast(camera.rotation) * glm::vec4(direction, 1.0f)).xyz() * 0.3f;
