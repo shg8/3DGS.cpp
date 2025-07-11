@@ -27,6 +27,7 @@ if (WIN32 OR APPLE)
     endif()
 
     set(GLM_ENABLE_CXX_20 ON CACHE INTERNAL "Enable experimental features")
+    set(GLM_DISABLE_AUTO_DETECTION ON CACHE INTERNAL "Disable auto detection to avoid poison-system-directories warning")
 
     FetchContent_Declare(
             glm
@@ -64,6 +65,12 @@ FetchContent_Declare(imgui
         GIT_TAG v1.90.3
 )
 FetchContent_MakeAvailable(imgui)
+
+FetchContent_Declare(stb
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+        GIT_TAG 5736b15f7ea0ffb08dd38af21067c314d6a3aae9
+)
+FetchContent_MakeAvailable(stb)
 
 if (APPLE)
     add_compile_definitions(__APPLE__)

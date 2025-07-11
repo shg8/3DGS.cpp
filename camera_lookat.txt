@@ -1,0 +1,18 @@
+# Camera Configuration File with Look-At
+# Alternative format using target and up vector
+
+# Camera position
+position 3.0 3.0 3.0
+
+# Look at target point
+target 0.0 0.0 0.0
+
+# Up vector (optional, defaults to 0,1,0)
+up 0.0 1.0 0.0
+
+# Field of view
+fov 45.0
+
+# Clipping planes
+near 0.2
+far 1000.0

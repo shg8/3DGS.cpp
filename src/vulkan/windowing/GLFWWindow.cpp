@@ -8,6 +8,11 @@ GLFWWindow::GLFWWindow(std::string name, int width, int height) {
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    
+    // Make window invisible if it's headless mode
+    if (name.find("Headless") != std::string::npos) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    }
 
     window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 }

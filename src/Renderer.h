@@ -165,6 +165,10 @@ private:
     void createCommandPool();
 
     void updateUniforms();
+    
+    void loadCameraFromFile();
+    
+    void renderOnceAndSave();
 };
 
 

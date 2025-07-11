@@ -1,0 +1,15 @@
+# Camera Configuration File
+# Format: key value1 value2 value3 ...
+
+# Camera position (x, y, z)
+position 0.0 2.0 5.0
+
+# Camera rotation using Euler angles in degrees (pitch, yaw, roll)
+euler -15.0 0.0 0.0
+
+# Field of view in degrees
+fov 60.0
+
+# Near and far clipping planes
+near 0.1
+far 100.0

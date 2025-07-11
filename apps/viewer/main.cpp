@@ -25,6 +25,8 @@ int main(int argc, char** argv) {
     args::ValueFlag<uint32_t> widthFlag{parser, "width", "Set window width", {'w', "width"}};
     args::ValueFlag<uint32_t> heightFlag{parser, "height", "Set window height", {'h', "height"}};
     args::Flag noGuiFlag{parser, "no-gui", "Disable GUI", { "no-gui"}};
+    args::ValueFlag<std::string> outputFlag{parser, "output", "Output image path for headless rendering", {'o', "output"}};
+    args::ValueFlagList<std::string> cameraFlag{parser, "camera", "Camera configuration file path(s)", {'c', "camera"}};
     args::Positional<std::string> scenePath{parser, "scene", "Path to scene file", "scene.ply"};
 
     try {
@@ -65,7 +67,7 @@ int main(int argc, char** argv) {
     // check that the scene file exists
     if (!std::filesystem::exists(config.scene)) {
         spdlog::critical("File does not exist: {}", config.scene);
-        return 0;
+        return 1;
     }
 
     if (validationLayersFlag) {
@@ -86,21 +88,65 @@ int main(int argc, char** argv) {
         config.enableGui = true;
     }
 
+    if (outputFlag) {
+        config.outputPath = args::get(outputFlag);
+        config.enableGui = false;
+    }
+
+    // Handle multiple camera configurations
+    std::vector<std::string> cameraPaths;
+    if (cameraFlag) {
+        cameraPaths = args::get(cameraFlag);
+        
+        // Multiple cameras only make sense with output path
+        if (cameraPaths.size() > 1 && !outputFlag) {
+            spdlog::critical("Multiple camera configurations can only be used with output path (-o)");
+            return 1;
+        }
+        
+        // For single camera, use the existing logic
+        if (cameraPaths.size() == 1) {
+            config.cameraPath = cameraPaths[0];
+        }
+    }
+
     auto width = widthFlag ? args::get(widthFlag) : 1280;
     auto height = heightFlag ? args::get(heightFlag) : 720;
 
-    config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
+    if (outputFlag) {
+        // For headless mode, we still need a window but make it invisible
+        config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting (Headless)", width, height);
+    } else {
+        config.window = VulkanSplatting::createGlfwWindow("Vulkan Splatting", width, height);
+    }
 
 #ifndef DEBUG
     try {
 #endif
-    auto renderer = VulkanSplatting(config);
-    renderer.start();
+    // Handle multiple camera configurations
+    if (cameraPaths.size() > 1) {
+        spdlog::info("Rendering with {} camera configurations", cameraPaths.size());
+        
+        for (size_t i = 0; i < cameraPaths.size(); ++i) {
+            spdlog::info("Rendering with camera configuration {}: {}", i + 1, cameraPaths[i]);
+            
+            // Create a new config for this camera
+            auto cameraConfig = config;
+            cameraConfig.cameraPath = cameraPaths[i];
+            
+            auto renderer = VulkanSplatting(cameraConfig);
+            renderer.start();
+        }
+    } else {
+        // Single camera or no camera - use existing logic
+        auto renderer = VulkanSplatting(config);
+        renderer.start();
+    }
 #ifndef DEBUG
     } catch (const std::exception& e) {
         spdlog::critical(e.what());
         std::cout << e.what() << std::endl;
-        return 0;
+        return 1;
     }
 #endif
     return 0;

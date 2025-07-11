@@ -121,10 +121,30 @@ Buffer::~Buffer() {
 }
 
 void Buffer::realloc(uint64_t newSize) {
-    vmaDestroyBuffer(context->allocator, static_cast<VkBuffer>(buffer), allocation);
-
+    // Store old buffer info in case new allocation fails
+    auto oldBuffer = buffer;
+    auto oldAllocation = allocation;
+    auto oldSize = size;
+    auto oldAllocationInfo = allocation_info;
+    
+    // Try to allocate new buffer first
     size = newSize;
-    alloc();
+    buffer = vk::Buffer{};  // Reset to avoid double-free in alloc() error path
+    allocation = nullptr;
+    
+    try {
+        alloc();
+    } catch (const std::exception& e) {
+        // Restore old buffer info on failure
+        buffer = oldBuffer;
+        allocation = oldAllocation;
+        size = oldSize;
+        allocation_info = oldAllocationInfo;
+        throw std::runtime_error("Failed to reallocate buffer: " + std::string(e.what()));
+    }
+    
+    // Only destroy old buffer after successful allocation
+    vmaDestroyBuffer(context->allocator, static_cast<VkBuffer>(oldBuffer), oldAllocation);
 
     vk::DescriptorBufferInfo bufferInfo(buffer, allocation_info.offset, size);
 

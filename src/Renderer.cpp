@@ -13,12 +13,15 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "vulkan/Utils.h"
+#include "ImageSaver.h"
+#include "CameraConfig.h"
 
 #include <spdlog/spdlog.h>
 
 void Renderer::initialize() {
     initializeVulkan();
     createGui();
+    loadCameraFromFile();
     loadSceneToGPU();
     createPreprocessPipeline();
     createPrefixSumPipeline();
@@ -426,6 +429,11 @@ startOfRenderLoop:
 }
 
 void Renderer::run() {
+    if (configuration.outputPath.has_value()) {
+        renderOnceAndSave();
+        return;
+    }
+
     while (running) {
         if (!window->tick()) {
             break;
@@ -544,10 +552,23 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
             sortBufferSizeMultiplier++;
         }
         spdlog::info("Reallocating sort buffers. {} -> {}", old, sortBufferSizeMultiplier);
-        sortKBufferEven->realloc(scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier);
-        sortKBufferOdd->realloc(scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier);
-        sortVBufferEven->realloc(scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier);
-        sortVBufferOdd->realloc(scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier);
+        
+        try {
+            sortKBufferEven->realloc(scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier);
+            sortKBufferOdd->realloc(scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier);
+            sortVBufferEven->realloc(scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier);
+            sortVBufferOdd->realloc(scene->getNumVertices() * sizeof(uint32_t) * sortBufferSizeMultiplier);
+        } catch (const std::exception& e) {
+            spdlog::error("Failed to reallocate sort buffers: {}", e.what());
+            spdlog::error("GPU may be out of memory. Required size: {} MB per buffer", 
+                         (scene->getNumVertices() * sizeof(uint64_t) * sortBufferSizeMultiplier) / (1024.0 * 1024.0));
+            
+            // Reset multiplier to previous value
+            sortBufferSizeMultiplier = old;
+            
+            // Exit gracefully
+            std::exit(1);
+        }
 
         uint32_t globalInvocationSize = scene->getNumVertices() * sortBufferSizeMultiplier /
                                         numRadixSortBlocksPerWorkgroup;
@@ -556,7 +577,12 @@ bool Renderer::recordRenderCommandBuffer(uint32_t currentFrame) {
 
         auto numWorkgroups = (globalInvocationSize + 256 - 1) / 256;
 
-        sortHistBuffer->realloc(numWorkgroups * 256 * sizeof(uint32_t));
+        try {
+            sortHistBuffer->realloc(numWorkgroups * 256 * sizeof(uint32_t));
+        } catch (const std::exception& e) {
+            spdlog::error("Failed to reallocate histogram buffer: {}", e.what());
+            std::exit(1);
+        }
 
         recordPreprocessCommandBuffer();
         return false;
@@ -751,6 +777,78 @@ void Renderer::updateUniforms() {
     data.tan_fovx = tan_fovx;
     data.tan_fovy = tan_fovy;
     uniformBuffer->upload(&data, sizeof(UniformBuffer), 0);
+}
+
+void Renderer::loadCameraFromFile() {
+    if (configuration.cameraPath.has_value()) {
+        spdlog::info("Loading camera configuration from: {}", configuration.cameraPath.value());
+        
+        auto cameraConfig = CameraConfig::loadFromFile(configuration.cameraPath.value());
+        
+        // Apply camera configuration
+        camera.position = cameraConfig.position;
+        camera.rotation = cameraConfig.rotation;
+        camera.fov = cameraConfig.fov;
+        camera.nearPlane = cameraConfig.nearPlane;
+        camera.farPlane = cameraConfig.farPlane;
+        
+        spdlog::info("Camera loaded successfully - Position: ({:.2f}, {:.2f}, {:.2f}), FOV: {:.1f}°", 
+                    camera.position.x, camera.position.y, camera.position.z, camera.fov);
+    }
+}
+
+void Renderer::renderOnceAndSave() {
+    // Headless rendering - render a single frame without presentation
+    
+    // Simulate normal frame acquisition 
+    auto ret = context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
+    if (ret != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to wait for fence");
+    }
+    context->device->resetFences(inflightFences[0].get());
+    
+    // Use first swapchain image
+    currentImageIndex = 0;
+
+    // Skip handleInput() in headless mode - no user interaction
+    updateUniforms();
+
+    // Submit preprocessing (same as normal draw())
+    auto submitInfo = vk::SubmitInfo{}.setCommandBuffers(preprocessCommandBuffer.get());
+    context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
+
+    ret = context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
+    if (ret != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to wait for fence");
+    }
+    context->device->resetFences(inflightFences[0].get());
+
+    // Record render command buffer (same as normal draw())
+    if (!recordRenderCommandBuffer(0)) {
+        // If buffer reallocation happened, we need to try again next frame
+        // In headless mode, just skip this and try once more
+        spdlog::warn("Buffer reallocation occurred, retrying render...");
+        
+        submitInfo = vk::SubmitInfo{}.setCommandBuffers(preprocessCommandBuffer.get());
+        context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
+        
+        ret = context->device->waitForFences(inflightFences[0].get(), VK_TRUE, UINT64_MAX);
+        if (ret != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed to wait for fence");
+        }
+        context->device->resetFences(inflightFences[0].get());
+        
+        if (!recordRenderCommandBuffer(0)) {
+            throw std::runtime_error("Failed to record render command buffer after retry");
+        }
+    }
+    
+    // Submit render commands (without presentation)
+    submitInfo = vk::SubmitInfo{}.setCommandBuffers(renderCommandBuffer.get());
+    context->queues[VulkanContext::Queue::COMPUTE].queue.submit(submitInfo, inflightFences[0].get());
+    
+    context->device->waitIdle();
+    ImageSaver::saveImage(context, swapchain->swapchainImages[currentImageIndex], configuration.outputPath.value());
 }
 
 Renderer::~Renderer() {
